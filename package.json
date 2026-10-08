@@ -61,7 +61,7 @@
         "sourceDir": "ext"
     },
     "devDependencies": {
-        "@codspeed/vitest-plugin": "^4.0.0",
+        "@codspeed/vitest-plugin": "^5.7.1",
         "@eslint/compat": "^1.2.4",
         "@eslint/eslintrc": "^3.2.0",
         "@eslint/js": "^9.17.0",
