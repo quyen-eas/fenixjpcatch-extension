@@ -7,6 +7,7 @@ runs:
       uses: actions/setup-node@v4
       with:
         node-version-file: "package.json"
+        cache: npm
 
     - name: Restore dependencies
       id: restore-dependencies
@@ -14,6 +15,15 @@ runs:
       with:
         path: node_modules
         key: js-depend-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
+
+    # The lockfile resolves the `yomitan-handlebars` git dependency over ssh
+    # (git+ssh://git@github.com/...). CI has no ssh key, so force https.
+    - name: Use https for GitHub git dependencies
+      if: steps.restore-dependencies.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
+        git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
+        git config --global --add url."https://github.com/".insteadOf "git@github.com:"
 
     - name: Install dependencies
       if: steps.restore-dependencies.outputs.cache-hit != 'true'

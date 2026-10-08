@@ -1,7 +1,7 @@
 name: Playwright Tests
 on:
   push:
-    branches: [master]
+    branches: [main]
   pull_request:
 permissions:
   contents: read
@@ -52,15 +52,15 @@ jobs:
 
       ### [PR] master-screenshots
 
-      - name: "[PR] Grab latest screenshots from master branch"
+      - name: "[PR] Grab latest screenshots from main branch"
         uses: dawidd6/action-download-artifact@07ab29fd4a977ae4d2b275087cf67563dfdf0295 # pin@v2
         continue-on-error: true
         id: master-screenshots
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          repo: yomidevs/yomitan # so that this works on forks
+          repo: ${{ github.repository }}
           name: playwright-screenshots
-          branch: master
+          branch: main
           workflow: playwright.yml
           workflow_conclusion: success
           path: test/playwright/__screenshots__/

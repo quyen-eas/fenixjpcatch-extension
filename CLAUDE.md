@@ -7,7 +7,7 @@ Technical notes for working in this repo. Language rules: code, comments, commit
 - Golden rule: **keep every Yomitan feature; only add**. Prefer new modules + existing extension points; minimize diff against upstream so `git merge upstream/master` stays cheap.
 - No secrets in this repo. Firebase web config is public; anything else goes through `.env.example`.
 
-> Status: Phase 0 — architecture notes only. No functional change has been made yet.
+> Status: Phase 0 complete pending final review (fork, branding placeholders, CI, docs). No functional change yet.
 
 ---
 
@@ -46,7 +46,7 @@ service worker sw.js → js/background/background-main.js → Backend (3k lines,
 
 - **Messaging:** every page talks to the background through `js/comm/api.js` (`API._invoke(action, params)`), dispatched in `Backend._apiMap` (`createApiMap([...])`, ~45 actions at `backend.js:146-192`; types in `types/ext/api.d.ts`). Adding a backend capability = new entry in `_apiMap` + method in `API` + types. This is the designated extension point for our cloud features.
 - **Cross-frame:** `js/comm/cross-frame-api.js`, `frame-*` for iframe/nested-popup plumbing. Popups are created by `js/app/popup-factory.js`/`popup.js` (iframe injected into the page) or `popup-window.js`.
-- **Service worker lifetime:** SW is killed when idle; anything long-lived/stateful (DB, clipboard) lives in the offscreen document. The offscreen doc is created in `background/offscreen-proxy.js:80` with **`reasons: ['CLIPBOARD']` only**, and Chrome allows **one offscreen document per profile** → any extra need (e.g. Firebase popup auth iframe) must extend this same document (add reason + handler), not create a second one.
+- **Service worker lifetime:** SW is killed when idle; anything long-lived/stateful (DB, clipboard) lives in the offscreen document. The offscreen doc is created in `background/offscreen-proxy.js:80` with **`reasons: ['CLIPBOARD']` only**, and Chrome allows **one offscreen document per profile** → do not touch it for our features (decision 6.3); if something ever must run there it has to extend this same document, never create a second one.
 - **CSP** (`dev/data/manifest-variants.json`): `extension_pages: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; …; connect-src *`. Remote scripts are forbidden → SDKs must be bundled; outbound `fetch`/XHR to any host is already allowed (`connect-src *`). Sandbox page has `unsafe-eval`.
 - **Manifest** is generated, not committed: `dev/data/manifest-variants.json` (base + variants `chrome`, `chrome-dev`, `chrome-playwright`, `firefox*`, `edge`, `safari`; version injected via `$YOMITAN_VERSION`). Name/description/icons/author live here → single place for branding, but also a recurring merge-conflict hotspot. Permissions today: `storage, clipboardWrite, unlimitedStorage, declarativeNetRequest, scripting, offscreen, contextMenus`; optional `clipboardRead, nativeMessaging`; host `<all_urls>`.
 
@@ -104,21 +104,74 @@ Options JSON is validated by `ext/data/schemas/options-schema.json` and migrated
 
 ## 5. i18n status (important)
 
-**Yomitan has no UI localisation**: no `_locales/`, no `chrome.i18n`, all UI strings are hard-coded English in `*.html`, `templates-*.html` and JS. (`chrome.i18n` hits in the repo are unrelated.) A Vietnamese UI therefore needs a new, additive mechanism (e.g. a `data-i18n` attribute pass + a dictionary of strings applied at page/Display load, shipped as a new module) — scope and merge-cost to be decided; upstreaming is unlikely to be accepted as-is.
+**Yomitan has no UI localisation**: no `_locales/`, no `chrome.i18n`, all UI strings are hard-coded English in `*.html`, `templates-*.html` and JS. (`chrome.i18n` hits in the repo are unrelated.) Decision 6.4: only our new UI is Vietnamese, through a small i18n layer in our own module; upstream pages and templates stay English and untouched.
 
-## 6. Design decisions for the planned additions (to be confirmed)
+## 6. Decisions
 
-1. **Module location:** `ext/js/cloud/` for everything new (auth, API client, save queue, UI glue); touch upstream files only at integration points: `backend.js` `_apiMap`, `api.js`, `types/ext/api.d.ts`, `templates-display.html`, `popup-main.js`/`search-main.js`, `offscreen-proxy.js`/`offscreen.js`, `manifest-variants.json`, new page HTML for "Saved words".
-2. **Where the SDK lives:** auth state and network calls in Backend/offscreen only; popup/search/settings pages call `application.api.*` (never load the Firebase SDK in the injected popup iframe). Bundle with esbuild into `ext/lib/` via a new `dev/lib/*.js` entry (existing mechanism).
-3. **Auth:** Firebase `firebase/auth/web-extension`; Google popup flow needs the offscreen iframe (extend the single existing offscreen doc with reason `IFRAME_SCRIPTING`) or alternatively `chrome.identity` + `signInWithCredential`; email-link needs a hosted landing page. Pending decision.
-4. **Offline queue:** `chrome.storage.local` (`unlimitedStorage` already granted); retry on `online` event / SW wake (no alarms permission yet).
-5. **Auto-install of bundled dictionaries:** must run in an extension _page_ (welcome page or a dedicated install page), reusing `DictionaryWorker` + the import controller logic; then prepend to the profile `dictionaries[]` for priority.
-6. **Libraries:** must be GPL-3.0-compatible (Apache-2.0 Firebase SDK is OK). Record name/version/license/reason in this file when added, and regenerate `ext/legal-npm.html` (`npm run license-report:html`).
-7. **Merge hygiene:** see `docs/upstream-sync.md` (to be written). Keep branding diffs confined to `dev/data/manifest-variants.json`, `package.json` metadata, `ext/images/icon*`, and welcome/info/about HTML.
+Decided 2026-10-08 (owner review of Phase 0). These replace any conflicting statement in earlier planning notes.
 
-## 7. CI & repo hygiene notes
+### 6.1 Repo & branches
 
-- `.github/workflows/` is upstream's: `ci.yml` (lint/tsc/unit/build/manifest-schema/bench), `playwright*.yml`, `codeql`, `scorecard`, and **publish/release workflows that target upstream's store accounts/secrets** (`publish-chrome*.yml`, `publish-edge.yml`, `publish-firefox*.yml`, `release.yml`, `touch-google-refresh-token.yml`, `create-prerelease-on-tag.yml`). For the fork: keep `ci.yml`/`codeql`/`dependency-review`; disable or rewrite the publishing, auto-approve and CodSpeed jobs.
+- Repo name: `fenixjpcatch-extension` (this repo). Default branch: `main` (CI is configured for it). `upstream` remote = Yomitan.
+- A separate private repo holds the backend and dictionary tooling. **Nothing from this repo's Yomitan code is copied there.** The extension talks to the backend only through the callable API documented in `docs/api.md` (written in Phase 3).
+
+### 6.2 Branding (placeholders)
+
+- Display name `FenixJpCatch`, author `Fenix Labs`, description "Từ điển Nhật–Việt dạng popup, tra nhanh khi đọc web. Based on Yomitan" (no trailing period: the `*-dev` variants append ". This is a development build.").
+- Contact email: **TODO** (not set in manifest; `author` is a plain string). Icons in `ext/images/icon*.png` are generated placeholders. Build zip file names (`yomitan-*.zip`) are intentionally unchanged to keep the diff small and Playwright/CI paths working.
+- Upstream pages (welcome, info, settings…) still say "Yomitan" until Phase 2 adds our own welcome/About pages.
+
+### 6.3 Authentication (replaces the earlier plan to use `firebase/auth/web-extension` popup flow)
+
+- **Google only** in the extension. Flow: `chrome.identity.launchWebAuthFlow` (not `getAuthToken`) → Google OAuth → ID token/credential → Firebase `signInWithCredential`.
+- **Do not modify upstream's offscreen document** (no extra reasons, no auth iframe).
+- Needs the `identity` permission (add in Phase 3) and a **stable extension ID**, because the redirect URI is `https://<extension-id>.chromiumapp.org/`. Dev builds must pin the ID with a `key` in the manifest (public key only; the matching private key is kept by the owner, never committed). Store builds get their ID from the store; register both redirect URIs in the OAuth client.
+- Email-link sign-in is **dropped** from the extension.
+- Backlog (Phase 4, backend-driven): sign-in with a 6-digit pairing code issued by another signed-in client and exchanged by a backend function for a custom token, for users who register with Apple/email elsewhere. Not implemented in the extension until then.
+- Auth state and network calls live in the Backend (service worker). Popup/search/settings pages go through `application.api.*`; never load the Firebase SDK in the injected popup iframe. Bundle with esbuild into `ext/lib/` via a new `dev/lib/*.js` entry.
+
+### 6.4 Localization (replaces the earlier plan to localize the main screens)
+
+- **Only new UI is Vietnamese**: our welcome page, sign-in, ☆ button + tooltips, "Từ đã lưu" page, About. Original Yomitan pages stay English.
+- A small i18n layer inside our own module (`ext/js/cloud/` or a sibling `ext/js/fenix/`), **no edits to upstream templates** for translation purposes.
+
+### 6.5 ☆ save-word button
+
+- Shown on **every** term entry (tooltip and sign-in prompt per the signed-out state).
+- `jmdictSeq` = `sequence` of the matching entry from the `FenixJpCatch JA-VI` dictionary, matched by `expression` + `reading`. If there is no such entry, the word is still saved with `jmdictSeq = null`. Never use the `sequence` of other dictionaries.
+- Our dictionary **must** set `sequence = JMdict ent_seq` on every term row.
+- Backend document ID: `"{seq}_{reading}"` when `seq` exists, else `"x_{hash(expression|reading)}"`. The hash function and normalization (proposal: SHA-256 of NFC-normalized `expression|reading`, hex-truncated) are fixed in `docs/api.md` in Phase 3 and computed server-side.
+- Payload fields (`expression`, `reading`, `contextSentence`, `sourceUrl`, `sourceTitle`) come from `display.history.state` (see 4.5), never from the popup frame's own URL/title.
+
+### 6.6 Dictionaries & updates
+
+- Bundled dictionaries are auto-installed from an extension **page** (welcome/install page), reusing `DictionaryWorker`; they are placed first in the profile `dictionaries[]` (priority = array order). Users can still install others.
+- Auto-update: only `isUpdatable`/`indexUrl`/`downloadUrl` in `index.json` (Yomitan's manual "Check updates"). **No `chrome.alarms`** for now; revisit in Phase 8.
+
+### 6.7 Module layout & libraries
+
+- New code in `ext/js/cloud/`. Upstream files touched only at integration points: `backend.js` `_apiMap`, `api.js`, `types/ext/api.d.ts`, `templates-display.html`, `popup-main.js`/`search-main.js`, `manifest-variants.json` (permissions), new page HTML. Every touched upstream file is listed in `CHANGES.md` and carries a "modified by FenixJpCatch" note where the format allows comments.
+- Offline save queue: `chrome.storage.local` (`unlimitedStorage` already granted); retry on `online` event and service-worker wake.
+- Libraries must be GPL-3.0-compatible (Apache-2.0 Firebase SDK is OK). Record name/version/license/reason here when added and regenerate `ext/legal-npm.html` (`npm run license-report:html`).
+
+### 6.8 CI
+
+- Kept: `ci.yml`, `codeql.yml`, `dependency-review.yml`; also kept `actionlint.yml`, `broken-links.yml`, `playwright.yml`, `playwright_comment.yml`.
+- Removed: upstream publish/release/auto-approve/CodSpeed/scorecard/delay/touch-token workflows (see `CHANGES.md`).
+- `.github/actions/setup`: npm cache + `git config url.https://github.com/.insteadOf ssh://git@github.com/` so `npm ci` can fetch the `yomitan-handlebars` git+ssh dependency.
+- Playwright visual baselines now come from this repo's `main` (upstream's baselines no longer match our branding). First run on `main` creates them.
+
+### 6.9 Privacy
+
+- `PRIVACY-POLICY.md` still describes upstream behavior. Phase 3 updates it together with the consent step before sending data (reuse `DataTransmissionConsentController`). Lookup stays 100% offline; data leaves the device only on ☆.
+
+### 6.10 Merging upstream
+
+See `docs/upstream-sync.md`. Keep branding diffs confined to: `dev/data/manifest-variants.json`, `package.json` metadata, `ext/images/icon*`, README, and (Phase 2) welcome/info/About.
+
+## 7. Repo hygiene notes
+
+- `.github/workflows/` was trimmed for the fork, see 6.8 and `CHANGES.md`. Workflows we kept still contain upstream conventions (e.g. Playwright pulls the test `dictionaries` branch from `yomidevs/yomitan`).
 - `.env` (tracked) only contains `PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS=1` for Playwright — not a secret.
 - `PRIVACY-POLICY.md` states Yomitan sends no data externally; it must be updated when the save-word feature lands (data is sent only when the user presses ☆).
 - Husky/lint-staged are set up (`npm ci --ignore-scripts` skips the hook install in automation).

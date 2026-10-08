@@ -1,12 +1,10 @@
 {
     "manifest": {
         "manifest_version": 3,
-        "name": "Yomitan Popup Dictionary",
+        "name": "FenixJpCatch",
         "version": "$YOMITAN_VERSION",
-        "description": "Popup dictionary for language learning",
-        "author": {
-            "email": "themoeway@googlegroups.com"
-        },
+        "description": "Từ điển Nhật–Việt dạng popup, tra nhanh khi đọc web. Based on Yomitan",
+        "author": "Fenix Labs",
         "icons": {
             "16": "images/icon16.png",
             "19": "images/icon19.png",
@@ -26,7 +24,7 @@
                 "64": "images/icon64.png",
                 "128": "images/icon128.png"
             },
-            "default_title": "Yomitan",
+            "default_title": "FenixJpCatch",
             "default_popup": "action-popup.html"
         },
         "background": {
@@ -194,7 +192,7 @@
                     "path": [
                         "author"
                     ],
-                    "value": "Yomidevs"
+                    "value": "Fenix Labs"
                 },
                 {
                     "action": "delete",
@@ -340,7 +338,7 @@
                     "path": [
                         "author"
                     ],
-                    "value": "Yomidevs"
+                    "value": "Fenix Labs"
                 },
                 {
                     "action": "remove",
