@@ -16,7 +16,8 @@ Policy: the fork only **adds** to Yomitan; no upstream feature is removed or hid
 | `ext/images/icon{16,19,32,38,48,64,128}.png` | Placeholder icons                                                                                 |
 | `package.json`, `package-lock.json`          | Package name, description, repository/bugs/homepage URLs                                          |
 | `README.md`                                  | Rewritten for the fork (upstream README is linked); third-party library table kept                |
-| `CODEOWNERS`, `SECURITY.md`                  | Point to this repository                                                                          |
+| `CODEOWNERS`, `SECURITY.md`                  | Point to this repository; support email                                                           |
+| `.github/dependabot.yml`                     | GitHub Actions only, weekly, grouped; npm updates disabled                                        |
 | `.github/actions/setup/action.yml`           | npm download cache; https rewrite for the `yomitan-handlebars` git+ssh dependency                 |
 | `.github/workflows/ci.yml`                   | Default branch is `main`; removed the CodSpeed benchmark job                                      |
 | `.github/workflows/playwright.yml`           | Default branch is `main`; baseline screenshots are taken from this repository instead of upstream |

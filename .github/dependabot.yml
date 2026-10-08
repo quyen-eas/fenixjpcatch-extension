@@ -1,39 +1,14 @@
 version: 2
 updates:
+  # Only GitHub Actions are updated automatically (weekly, one grouped PR).
+  # npm dependencies are updated manually (a GPL fork stays close to upstream's lockfile).
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "monthly"
+      interval: "weekly"
     labels:
       - "area/dependencies"
-    groups: # group minor/patch updates together
-      minor:
+    groups:
+      github-actions:
         patterns:
           - "*"
-        update-types:
-          - "minor"
-          - "patch"
-
-  - package-ecosystem: "npm"
-    directory: "/"
-    schedule:
-      interval: "monthly"
-    labels:
-      - "area/dependencies"
-    groups: # group minor/patch updates together
-      minor:
-        patterns:
-          - "*"
-        update-types:
-          - "minor"
-          - "patch"
-    ignore:
-      # These dependencies should be updated manually:
-      - dependency-name: "vitest"
-        # Benchmarking is an experimental feature in vitest:
-        # https://github.com/yomidevs/yomitan/pull/583#issuecomment-1925047371
-      - dependency-name: "@vitest/coverage-v8"
-        # Pinned to stay on the same version as vitest
-      - dependency-name: "@types/node"
-        # Version 20.11.6 introduces an incompatibility with vite:
-        # https://github.com/vitejs/vite/issues/15714

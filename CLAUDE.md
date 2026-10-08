@@ -7,7 +7,7 @@ Technical notes for working in this repo. Language rules: code, comments, commit
 - Golden rule: **keep every Yomitan feature; only add**. Prefer new modules + existing extension points; minimize diff against upstream so `git merge upstream/master` stays cheap.
 - No secrets in this repo. Firebase web config is public; anything else goes through `.env.example`.
 
-> Status: Phase 0 complete pending final review (fork, branding placeholders, CI, docs). No functional change yet.
+> Status: Phase 0 done and confirmed by the owner (2026-10-08). Next: Phase 1 happens in the private repo; this repo next changes in Phase 2. No functional change yet.
 
 ---
 
@@ -113,12 +113,13 @@ Decided 2026-10-08 (owner review of Phase 0). These replace any conflicting stat
 ### 6.1 Repo & branches
 
 - Repo name: `fenixjpcatch-extension` (this repo). Default branch: `main` (CI is configured for it). `upstream` remote = Yomitan.
+- **Workflow from Phase 1 on:** each phase is developed on its own branch and merged into `main` through a PR; finish each phase with a report and wait for confirmation. (Phase 0 was committed directly; `main` was created from the Phase 0 branch.)
 - A separate private repo holds the backend and dictionary tooling. **Nothing from this repo's Yomitan code is copied there.** The extension talks to the backend only through the callable API documented in `docs/api.md` (written in Phase 3).
 
 ### 6.2 Branding (placeholders)
 
 - Display name `FenixJpCatch`, author `Fenix Labs`, description "Từ điển Nhật–Việt dạng popup, tra nhanh khi đọc web. Based on Yomitan" (no trailing period: the `*-dev` variants append ". This is a development build.").
-- Contact email: **TODO** (not set in manifest; `author` is a plain string). Icons in `ext/images/icon*.png` are generated placeholders. Build zip file names (`yomitan-*.zip`) are intentionally unchanged to keep the diff small and Playwright/CI paths working.
+- Contact/support email: `support@fenixlabs.app` (used in `SECURITY.md`; not in the manifest, where `author` is a plain string; set it in the store listing). Icons in `ext/images/icon*.png` are generated placeholders. Build zip file names (`yomitan-*.zip`) are intentionally unchanged to keep the diff small and Playwright/CI paths working.
 - Upstream pages (welcome, info, settings…) still say "Yomitan" until Phase 2 adds our own welcome/About pages.
 
 ### 6.3 Authentication (replaces the earlier plan to use `firebase/auth/web-extension` popup flow)
@@ -140,7 +141,7 @@ Decided 2026-10-08 (owner review of Phase 0). These replace any conflicting stat
 - Shown on **every** term entry (tooltip and sign-in prompt per the signed-out state).
 - `jmdictSeq` = `sequence` of the matching entry from the `FenixJpCatch JA-VI` dictionary, matched by `expression` + `reading`. If there is no such entry, the word is still saved with `jmdictSeq = null`. Never use the `sequence` of other dictionaries.
 - Our dictionary **must** set `sequence = JMdict ent_seq` on every term row.
-- Backend document ID: `"{seq}_{reading}"` when `seq` exists, else `"x_{hash(expression|reading)}"`. The hash function and normalization (proposal: SHA-256 of NFC-normalized `expression|reading`, hex-truncated) are fixed in `docs/api.md` in Phase 3 and computed server-side.
+- Backend document ID: `"{seq}_{reading}"` when `seq` exists, else `"x_{hash(expression|reading)}"`. The hash function and normalization are **decided**: `hash = first 16 hex chars of SHA-256( NFC(trim(expression)) + "|" + NFC(trim(reading)) )` (UTF-8). It is computed **only by the server**; clients never send or choose IDs. Written into `docs/api.md` in Phase 3.
 - Payload fields (`expression`, `reading`, `contextSentence`, `sourceUrl`, `sourceTitle`) come from `display.history.state` (see 4.5), never from the popup frame's own URL/title.
 
 ### 6.6 Dictionaries & updates
@@ -159,7 +160,8 @@ Decided 2026-10-08 (owner review of Phase 0). These replace any conflicting stat
 - Kept: `ci.yml`, `codeql.yml`, `dependency-review.yml`; also kept `actionlint.yml`, `broken-links.yml`, `playwright.yml`, `playwright_comment.yml`.
 - Removed: upstream publish/release/auto-approve/CodSpeed/scorecard/delay/touch-token workflows (see `CHANGES.md`).
 - `.github/actions/setup`: npm cache + `git config url.https://github.com/.insteadOf ssh://git@github.com/` so `npm ci` can fetch the `yomitan-handlebars` git+ssh dependency.
-- Playwright visual baselines now come from this repo's `main` (upstream's baselines no longer match our branding). First run on `main` creates them.
+- Playwright visual baselines now come from this repo's `main` (upstream's baselines no longer match our branding). The first run on `main` creates them; the merged `playwright-screenshots` artifact of that run (and the `playwright-report` artifact) is what the owner reviews.
+- `dependabot.yml`: GitHub Actions only, weekly, one grouped PR. npm updates are off (manual).
 
 ### 6.9 Privacy
 
