@@ -18,10 +18,10 @@ jobs:
       - name: Remove all fonts
         run: rm -rf /usr/share/fonts
 
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7.0.1
 
       - name: Install CJK fonts
-        uses: awalsh128/cache-apt-pkgs-action@acb598e5ddbc6f68a970c5da0688d2f3a9f04d05 # v1.6.0
+        uses: awalsh128/cache-apt-pkgs-action@553a35bb8ebd9fcabcb1c9451aa4c98e1b4ca8a9 # v1.6.3
         with:
           packages: fonts-ipafont-mincho
           execute_install_scripts: true
@@ -33,7 +33,7 @@ jobs:
 
       - name: Cache playwright browsers
         id: cache-playwright
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: |
             ~/.cache/ms-playwright
@@ -44,7 +44,7 @@ jobs:
         run: npx playwright install chromium
 
       - name: Grab latest dictionaries from dictionaries branch
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7.0.1
         with:
           repository: yomidevs/yomitan # so that this works on forks
           ref: dictionaries
@@ -53,7 +53,7 @@ jobs:
       ### [PR] master-screenshots
 
       - name: "[PR] Grab latest screenshots from main branch"
-        uses: dawidd6/action-download-artifact@07ab29fd4a977ae4d2b275087cf67563dfdf0295 # pin@v2
+        uses: dawidd6/action-download-artifact@eab87c9830c39eff17e5a6eadb20bfb4bc880477 # pin@v2
         continue-on-error: true
         id: master-screenshots
         with:
@@ -117,7 +117,7 @@ jobs:
     if: ${{ !cancelled() }}
     needs: [playwright-tests]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7.0.1
       - uses: ./.github/actions/setup
 
       ### playwright-report

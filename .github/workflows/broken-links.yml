@@ -16,11 +16,11 @@ jobs:
   link-checker:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7.0.1
       - uses: ./.github/actions/setup
       - name: Build Legal
         run: npm run license-report:html
-      - uses: lycheeverse/lychee-action@v2.8.0
+      - uses: lycheeverse/lychee-action@v2.9.0
         with:
           fail: true
           jobSummary: false
