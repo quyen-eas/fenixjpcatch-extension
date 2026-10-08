@@ -97,7 +97,7 @@
         "fake-indexeddb": "^6.0.0",
         "globals": "^15.14.0",
         "handlebars": "^4.7.8",
-        "html-validate": "^9.1.0",
+        "html-validate": "^11.16.2",
         "husky": "^9.1.7",
         "jsdom": "^25.0.1",
         "jszip": "^3.10.1",
