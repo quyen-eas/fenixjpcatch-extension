@@ -10,19 +10,22 @@ Policy: the fork only **adds** to Yomitan; no upstream feature is removed or hid
 
 ### Modified upstream files
 
-| File                                         | Change                                                                                            |
-| -------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| `dev/data/manifest-variants.json`            | Branding: extension name, description, action title, author                                       |
-| `ext/images/icon{16,19,32,38,48,64,128}.png` | Placeholder icons                                                                                 |
-| `package.json`, `package-lock.json`          | Package name, description, repository/bugs/homepage URLs                                          |
-| `README.md`                                  | Rewritten for the fork (upstream README is linked); third-party library table kept                |
-| `CODEOWNERS`, `SECURITY.md`                  | Point to this repository; support email                                                           |
-| `.github/dependabot.yml`                     | GitHub Actions only, weekly, grouped; npm updates disabled                                        |
-| `.github/actions/setup/action.yml`           | npm download cache; https rewrite for the `yomitan-handlebars` git+ssh dependency                 |
-| `.github/workflows/ci.yml`                   | Default branch is `main`; removed the CodSpeed benchmark job                                      |
-| `.github/workflows/playwright.yml`           | Default branch is `main`; baseline screenshots are taken from this repository instead of upstream |
-| `.github/workflows/codeql.yml`               | Default branch is `main`                                                                          |
-| `.github/workflows/broken-links.yml`         | Uses the shared setup action                                                                      |
+| File                                         | Change                                                                                                                                                                    |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `dev/data/manifest-variants.json`            | Branding: extension name, description, action title, author                                                                                                               |
+| `ext/images/icon{16,19,32,38,48,64,128}.png` | Placeholder icons                                                                                                                                                         |
+| `package.json`, `package-lock.json`          | Package name, description, repository/bugs/homepage URLs                                                                                                                  |
+| `README.md`                                  | Rewritten for the fork (upstream README is linked); third-party library table kept                                                                                        |
+| `CODEOWNERS`, `SECURITY.md`                  | Point to this repository; support email                                                                                                                                   |
+| `.github/dependabot.yml`                     | GitHub Actions only, weekly, grouped; npm updates disabled                                                                                                                |
+| `.github/actions/setup/action.yml`           | npm download cache; https rewrite for the `yomitan-handlebars` git+ssh dependency                                                                                         |
+| `.github/workflows/ci.yml`                   | Default branch is `main`; removed the CodSpeed benchmark job                                                                                                              |
+| `.github/workflows/playwright.yml`           | Default branch is `main`; baseline screenshots are taken from this repository instead of upstream                                                                         |
+| `.github/workflows/codeql.yml`               | Default branch is `main`                                                                                                                                                  |
+| `.github/workflows/broken-links.yml`         | Uses the shared setup action                                                                                                                                              |
+| `ext/js/background/backend.js`               | `_openWelcomeGuidePage` opens `/fenix-welcome.html` (Vietnamese welcome) instead of `/welcome.html`; the original page is unchanged and linked from the new one (Phase 2) |
+| `eslint.config.js`                           | Appended block: new files under `ext/js/fenix/`, `test/fenix/`, `test/playwright/fenix-*` use the fork's license header (Phase 2)                                         |
+| `test/playwright/playwright-util.js`         | The shared browser context aborts requests to the dictionary release URL so tests never touch the network; exports `FENIX_RELEASE_URL_PATTERN` (Phase 2)                  |
 
 ### Removed upstream files
 
@@ -32,3 +35,8 @@ Upstream release/publishing automation that depends on upstream's store accounts
 ### Added files
 
 - `CLAUDE.md`, `ATTRIBUTION.md`, `CHANGES.md`, `docs/upstream-sync.md`
+- Phase 2 (onboarding):
+  - `ext/js/fenix/` — first-run dictionary installer, Vietnamese welcome and About pages, small i18n layer (`dictionary-release.js`, `dictionary-downloader.js`, `dictionary-installer.js`, `onboarding-settings.js`, `onboarding-state.js`, `i18n.js`, `messages-vi.js`, `welcome-*.js`, `about-main.js`)
+  - `ext/fenix-welcome.html`, `ext/fenix-about.html`, `ext/css/fenix.css`
+  - `docs/dictionary-release.md` — naming convention of the dictionary Release assets
+  - `test/fenix/` (unit tests and fixture dictionaries), `test/playwright/fenix-onboarding.spec.js`

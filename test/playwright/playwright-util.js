@@ -23,6 +23,9 @@ const dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export const root = path.join(dirname, '..', '..');
 
+/** URLs of the FenixJpCatch dictionary release assets (see docs/dictionary-release.md). */
+export const FENIX_RELEASE_URL_PATTERN = /^https:\/\/github\.com\/quyen-eas\/fenixjpcatch-extension\/releases\//;
+
 export const test = base.extend({
     // eslint-disable-next-line no-empty-pattern
     context: async ({}, /** @type {(r: import('playwright').BrowserContext) => Promise<void>} */ use) => {
@@ -35,6 +38,9 @@ export const test = base.extend({
                 `--load-extension=${pathToExtension}`,
             ],
         });
+        // Modified by FenixJpCatch: the first-run welcome page downloads the bundled dictionaries from the GitHub Release;
+        // tests must never depend on (or write data from) the network. fenix-onboarding.spec.js registers its own route on top of this one.
+        await context.route(FENIX_RELEASE_URL_PATTERN, (route) => route.abort());
         await use(context);
         await context.close();
     },
