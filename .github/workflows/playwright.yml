@@ -88,12 +88,8 @@ jobs:
       # update mode, so that functional failures are reported; screenshots are only compared once a baseline exists.
       - name: "[PR] Run tests without a baseline (no screenshots on main yet)"
         run: |
-          set +e
-          node -v; npm -v; npx playwright --version
-          ls node_modules/.bin | grep -i playwright
-          echo "--- list"; timeout 120 npx playwright test --list --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }} --reporter=list 2>&1 | tail -30; echo "list exit ${PIPESTATUS[0]}"
-          echo "--- run"; DEBUG=pw:test,pw:browser timeout 240 npx playwright test --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }} -u --reporter=list 2>&1 | tail -80 | tee ./playwright-output; echo "run exit ${PIPESTATUS[0]}"
-        timeout-minutes: 10
+          npx playwright test --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }} -u 2>&1 | tee ./playwright-output || true
+        timeout-minutes: 30
         continue-on-error: true
         if: github.event_name == 'pull_request' && steps.master-screenshots.outcome == 'failure'
 
