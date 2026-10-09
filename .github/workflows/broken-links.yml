@@ -24,4 +24,5 @@ jobs:
         with:
           fail: true
           jobSummary: false
-          args: --exclude-path 'node_modules' --root-dir '${{ github.workspace }}/ext' --verbose --no-progress './**/*.md' './**/*.html' './**/*.rst'
+          # Modified by FenixJpCatch: 429 (rate limited, seen for gnu.org and Google blogs) is not a broken link; retry first.
+          args: --exclude-path 'node_modules' --root-dir '${{ github.workspace }}/ext' --verbose --no-progress --max-retries 3 --retry-wait-time 5 --accept '100..=103,200..=299,429' './**/*.md' './**/*.html' './**/*.rst'

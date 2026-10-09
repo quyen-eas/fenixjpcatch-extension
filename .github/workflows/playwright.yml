@@ -9,6 +9,11 @@ jobs:
   playwright-tests:
     timeout-minutes: 60
     runs-on: ubuntu-latest
+    # Modified by FenixJpCatch: dawidd6/action-download-artifact lists workflow runs, which needs `actions: read` on a
+    # private repository ("Resource not accessible by integration"); public repositories do not need it.
+    permissions:
+      actions: read
+      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -78,16 +83,28 @@ jobs:
         if: github.event_name == 'pull_request'
 
       ### actual tests
+      # Modified by FenixJpCatch: while `main` has no successful run yet there are no baseline screenshots to download and
+      # upstream's workflow skips every test (the merge job then fails for lack of reports). Run the tests anyway, in
+      # update mode, so that functional failures are reported; screenshots are only compared once a baseline exists.
+      - name: "[PR] Run tests without a baseline (no screenshots on main yet)"
+        run: |
+          npx playwright test --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }} -u 2>&1 | tee ./playwright-output || true
+        timeout-minutes: 30
+        continue-on-error: true
+        if: github.event_name == 'pull_request' && steps.master-screenshots.outcome == 'failure'
+
       - name: "[PR] Run tests & compare against master"
         id: playwright
         run: |
           npx playwright test --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }} 2>&1 | tee ./playwright-output || true
+        timeout-minutes: 30
         continue-on-error: true
         if: github.event_name == 'pull_request' && steps.master-screenshots.outcome != 'failure'
 
       - name: "[Push] Run tests & save screenshots"
         id: playwright-master
         run: npx playwright test --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }} -u 2>&1 | tee ./playwright-output
+        timeout-minutes: 30
         if: github.event_name == 'push'
 
       - uses: actions/upload-artifact@v6

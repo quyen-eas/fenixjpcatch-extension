@@ -14,6 +14,8 @@ jobs:
     name: ${{ matrix.name }}
     runs-on: ubuntu-latest
     strategy:
+      # Modified by FenixJpCatch: one flaky job must not cancel the others (it hid the Unit Tests / JavaScript results).
+      fail-fast: false
       matrix:
         include:
           - name: JavaScript

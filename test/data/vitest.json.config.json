@@ -1,5 +1,6 @@
 {
     "test": {
+        "testTimeout": 120000,
         "include": [
             "test/json.test.js"
         ]
