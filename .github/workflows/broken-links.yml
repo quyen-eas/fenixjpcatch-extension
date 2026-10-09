@@ -24,5 +24,6 @@ jobs:
         with:
           fail: true
           jobSummary: false
-          # Modified by FenixJpCatch: 429 (rate limited, seen for gnu.org and Google blogs) is not a broken link; retry first.
-          args: --exclude-path 'node_modules' --root-dir '${{ github.workspace }}/ext' --verbose --no-progress --max-retries 3 --retry-wait-time 5 --accept '100..=103,200..=299,429' './**/*.md' './**/*.html' './**/*.rst'
+          # Modified by FenixJpCatch: lychee's default concurrency (128) trips rate limits (429 from Google/gnu.org, 503 from github.com), so
+          # lower it, retry, and treat transient server answers (408/429/502/503/504) as "not broken".
+          args: --exclude-path 'node_modules' --root-dir '${{ github.workspace }}/ext' --verbose --no-progress --max-concurrency 10 --max-retries 3 --retry-wait-time 5 --timeout 30 --accept '100..=103,200..=299,408,429,502,503,504' './**/*.md' './**/*.html' './**/*.rst'
