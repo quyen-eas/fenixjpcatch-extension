@@ -80,7 +80,8 @@ export async function mockAnkiRouteHandler(route) {
         if (typeof requestJson !== 'object' || requestJson === null) {
             throw new Error(`Invalid request type: ${typeof requestJson}`);
         }
-        const body = getResponseBody(/** @type {import('core').SerializableObject} */ (requestJson).action);
+        const {action, params} = /** @type {import('core').SerializableObject} */ (requestJson);
+        const body = getResponseBody(action, params);
         const responseJson = {
             status: 200,
             contentType: 'text/json',
@@ -134,18 +135,31 @@ export function getExpectedAddNoteBody() {
 }
 
 /**
+ * @param {unknown} params
+ * @returns {unknown[]} One placeholder per note of an Anki Connect request.
+ */
+function countNotes(params) {
+    const notes = typeof params === 'object' && params !== null ? /** @type {Record<string, unknown>} */ (params).notes : null;
+    return Array.isArray(notes) ? /** @type {unknown[]} */ (notes) : [];
+}
+
+/**
  * @param {unknown} action
+ * @param {unknown} params
  * @returns {unknown}
  * @throws {Error}
  */
-function getResponseBody(action) {
+function getResponseBody(action, params) {
     switch (action) {
         case 'version': return 6;
         case 'deckNames': return ['Mock Deck'];
         case 'modelNames': return ['Mock Model'];
         case 'modelFieldNames': return [...getMockModelFields().keys()];
-        case 'canAddNotes': return [true, true];
-        case 'canAddNotesWithErrorDetail': return [{canAdd: true}, {canAdd: true}];
+        // Modified by FenixJpCatch: answer once per submitted note. The mock used to return a fixed two entries, but Yomitan
+        // rejects a reply whose length differs from the number of notes, so with one note the add-note button never showed
+        // (integration.spec "anki add" failed identically on upstream's code at the fork base, locally and on CI).
+        case 'canAddNotes': return countNotes(params).map(() => true);
+        case 'canAddNotesWithErrorDetail': return countNotes(params).map(() => ({canAdd: true}));
         case 'storeMediaFile': return 'mock_audio.mp3';
         case 'addNote': return 102312488912;
         case 'multi': return [];
