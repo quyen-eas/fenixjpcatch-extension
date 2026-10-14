@@ -21,6 +21,7 @@ import {DictionaryDatabase} from '../../ext/js/dictionary/dictionary-database.js
 import {DictionaryImporter} from '../../ext/js/dictionary/dictionary-importer.js';
 import {OptionsUtil} from '../../ext/js/data/options-util.js';
 import {FenixInstallError} from '../../ext/js/fenix/dictionary-downloader.js';
+import {readArchiveTitle} from '../../ext/js/fenix/archive-index.js';
 import {FenixDictionaryInstaller} from '../../ext/js/fenix/dictionary-installer.js';
 import {FENIX_DICTIONARIES, getDictionaryDownloadUrl} from '../../ext/js/fenix/dictionary-release.js';
 import {OnboardingStateStore} from '../../ext/js/fenix/onboarding-state.js';
@@ -47,14 +48,15 @@ const [TERM, KANJI] = FENIX_DICTIONARIES;
  * @property {OnboardingStateStore} state
  * @property {string[]} downloads Requested URLs, in order.
  * @property {() => number} getDatabaseUpdates
+ * @property {() => number} getImportCalls How many times the importer was invoked.
  */
 
 /**
  * A complete installer environment: real importer + database (fake IndexedDB), real default options.
- * @param {{failUrls?: Set<string>, archives?: Map<string, ArrayBuffer>}} [config]
+ * @param {{failUrls?: Set<string>, archives?: Map<string, ArrayBuffer>, overrides?: Partial<import('../../ext/js/fenix/dictionary-installer.js').InstallerDependencies> | ((context: {database: DictionaryDatabase}) => Partial<import('../../ext/js/fenix/dictionary-installer.js').InstallerDependencies>)}} [config]
  * @returns {Promise<Environment>} The installer plus the objects it operates on, for assertions.
  */
-async function createEnvironment({failUrls = new Set(), archives} = {}) {
+async function createEnvironment({failUrls = new Set(), archives, overrides = {}} = {}) {
     globalThis.indexedDB = new IDBFactory();
     const database = new DictionaryDatabase();
     await database.prepare();
@@ -71,6 +73,7 @@ async function createEnvironment({failUrls = new Set(), archives} = {}) {
     ]);
     let databaseUpdates = 0;
 
+    let importCalls = 0;
     const installer = new FenixDictionaryInstaller({
         download: async (url, onProgress) => {
             downloads.push(url);
@@ -82,9 +85,12 @@ async function createEnvironment({failUrls = new Set(), archives} = {}) {
             return structuredClone(archive);
         },
         importArchive: async (archive, onProgress) => {
+            ++importCalls;
             const importer = new DictionaryImporter(new DictionaryImporterMediaLoader(), onProgress);
             return await importer.importDictionary(database, archive, {prefixWildcardsSupported: false, yomitanVersion: '0.0.0.0'});
         },
+        readArchiveTitle,
+        deleteDictionary: async (title) => { await database.deleteDictionary(title, 1000, () => {}); },
         getDictionaryInfo: () => database.getDictionaryInfo(),
         getOptionsFull: async () => options,
         getProfileIndex: () => 0,
@@ -95,8 +101,9 @@ async function createEnvironment({failUrls = new Set(), archives} = {}) {
         notifyDatabaseUpdated: async () => { ++databaseUpdates; },
         state,
         createDictionarySettings: (name, enabled, styles) => ({name, alias: name, enabled, allowSecondarySearches: false, definitionsCollapsible: 'not-collapsible', partsOfSpeechFilter: true, useDeinflections: true, styles: styles ?? ''}),
+        ...(typeof overrides === 'function' ? overrides({database}) : overrides),
     });
-    return {installer, database, options, optionsUtil, state, downloads, getDatabaseUpdates: () => databaseUpdates};
+    return {installer, database, options, optionsUtil, state, downloads, getDatabaseUpdates: () => databaseUpdates, getImportCalls: () => importCalls};
 }
 
 /**
@@ -212,17 +219,6 @@ describe('FenixDictionaryInstaller', () => {
         expect(env.options.profiles[0].options.dictionaries.map(({name}) => name)).toStrictEqual([TERM.title, KANJI.title]);
     });
 
-    test('rejects an archive whose title is not the documented one', async () => {
-        const wrong = await createFixtureArchive('ja-vi');
-        const env = await createEnvironment({archives: new Map([[getDictionaryDownloadUrl(KANJI), wrong]])});
-        /** @type {import('../../ext/js/fenix/dictionary-installer.js').InstallEvent[]} */
-        const events = [];
-        expect(await env.installer.install(KANJI, (event) => { events.push(event); })).toBe(false);
-        expect(events.at(-1)?.error?.message).toContain('Unexpected dictionary title');
-        expect(env.options.profiles[0].options.dictionaries).toStrictEqual([]);
-        expect((await env.state.load()).dictionaries).toStrictEqual({});
-    });
-
     test('reports invalid archives as import errors', async () => {
         const env = await createEnvironment({archives: new Map([[getDictionaryDownloadUrl(TERM), new TextEncoder().encode('not a zip').buffer]])});
         /** @type {import('../../ext/js/fenix/dictionary-installer.js').InstallEvent[]} */
@@ -242,5 +238,142 @@ describe('FenixDictionaryInstaller', () => {
         await env.installer.installFirstRun(() => {});
         expect(env.downloads).toStrictEqual([getDictionaryDownloadUrl(KANJI)]);
         expect(env.options.profiles[0].options.dictionaries.map(({name}) => name)).toStrictEqual([TERM.title, KANJI.title]);
+    });
+
+    describe('partial and wrong imports', () => {
+        /** @type {import('../../ext/js/fenix/dictionary-installer.js').InstallEvent[]} */
+        let events = [];
+        /** @type {(event: import('../../ext/js/fenix/dictionary-installer.js').InstallEvent) => void} */
+        const record = (event) => { events.push(event); };
+        beforeEach(() => { events = []; });
+
+        /**
+         * @param {Environment} env
+         * @returns {Promise<string[]>}
+         */
+        async function titlesInDatabase(env) {
+            return (await env.database.getDictionaryInfo()).map(({title}) => title);
+        }
+
+        test('P1: an import with row-write errors is removed, not recorded, and succeeds when retried', async () => {
+            const env = await createEnvironment();
+            const bulkAdd = env.database.bulkAdd.bind(env.database);
+            let fail = true;
+            vi.spyOn(env.database, 'bulkAdd').mockImplementation(async (store, entries, start, count) => {
+                if (fail && store === 'terms') { throw new Error('disk full'); }
+                await bulkAdd(store, entries, start, count);
+            });
+
+            expect(await env.installer.install(TERM, record)).toBe(false);
+            const error = events.at(-1)?.error;
+            expect(events.at(-1)?.phase).toBe('error');
+            expect(error?.code).toBe('import');
+            expect(error?.message).toContain('disk full');
+            expect(await titlesInDatabase(env)).toStrictEqual([]); // the partial import was deleted
+            expect(env.options.profiles[0].options.dictionaries).toStrictEqual([]);
+            expect((await env.state.load()).dictionaries).toStrictEqual({});
+            expect(await env.installer.getInstalled()).toStrictEqual(new Map([['ja-vi', false], ['kanji-vi', false]]));
+
+            // The next first-run attempt installs it from scratch.
+            fail = false;
+            events = [];
+            expect(await env.installer.installFirstRun(record)).toBe(true);
+            expect(await titlesInDatabase(env)).toStrictEqual([TERM.title, KANJI.title].sort());
+            expect(env.options.profiles[0].options.dictionaries.map(({name}) => name)).toStrictEqual([TERM.title, KANJI.title]);
+            const terms = await env.database.findTermsBulk(['食べる'], new Map([[TERM.title, {alias: TERM.title, allowSecondarySearches: false}]]), 'exact');
+            expect(terms).toHaveLength(1);
+        });
+
+        test('invalid data is rejected by the importer before it writes anything', async () => {
+            const broken = await createFixtureArchive('ja-vi', 'broken', (files) => {
+                files.set('term_bank_1.json', [['食べる', 'たべる']]); // rows must have 8 fields
+            });
+            const env = await createEnvironment({archives: new Map([[getDictionaryDownloadUrl(TERM), broken], [getDictionaryDownloadUrl(KANJI), await createFixtureArchive('kanji-vi')]])});
+
+            expect(await env.installer.install(TERM, record)).toBe(false);
+            expect(events.at(-1)?.error?.code).toBe('import');
+            expect(await titlesInDatabase(env)).toStrictEqual([]);
+            expect((await env.state.load()).dictionaries).toStrictEqual({});
+        });
+
+        test('P1: a null result that left data behind is cleaned up too', async () => {
+            const env = await createEnvironment({overrides: ({database}) => ({
+                importArchive: async (archive) => {
+                    // Imports fully, then reports failure the way the importer does for late problems (e.g. invalid CSS).
+                    await new DictionaryImporter(new DictionaryImporterMediaLoader(), () => {}).importDictionary(database, archive, {prefixWildcardsSupported: false, yomitanVersion: '0.0.0.0'});
+                    return {result: null, errors: [new Error('invalid styles')]};
+                },
+            })});
+            expect(await env.installer.install(TERM, record)).toBe(false);
+            expect(events.at(-1)?.error?.message).toContain('invalid styles');
+            expect(await titlesInDatabase(env)).toStrictEqual([]);
+        });
+
+        test('P1: a stale interrupted import (importSuccess false) is replaced on the next first run', async () => {
+            let stale = true;
+            const env = await createEnvironment({overrides: ({database}) => ({
+                // The importer only flags importSuccess false when it fails mid-way; present a complete import as such.
+                getDictionaryInfo: async () => (await database.getDictionaryInfo()).map((info) => (stale && info.title === TERM.title ? {...info, importSuccess: false} : info)),
+                deleteDictionary: async (title) => {
+                    await database.deleteDictionary(title, 1000, () => {});
+                    stale = false;
+                },
+            })});
+            await new DictionaryImporter(new DictionaryImporterMediaLoader(), () => {}).importDictionary(env.database, await createFixtureArchive('ja-vi'), {prefixWildcardsSupported: false, yomitanVersion: '0.0.0.0'});
+            expect(await env.installer.getInstalled()).toStrictEqual(new Map([['ja-vi', false], ['kanji-vi', false]]));
+
+            expect(await env.installer.installFirstRun(record)).toBe(true);
+            expect(stale).toBe(false); // it was deleted, then imported again
+            expect(env.getImportCalls()).toBe(2);
+            expect(await titlesInDatabase(env)).toStrictEqual([TERM.title, KANJI.title].sort());
+            expect(env.options.profiles[0].options.dictionaries.map(({name}) => name)).toStrictEqual([TERM.title, KANJI.title]);
+        });
+
+        test('P2: an archive with the wrong title is rejected before anything is imported', async () => {
+            const wrong = await createFixtureArchive('ja-vi');
+            const env = await createEnvironment({archives: new Map([[getDictionaryDownloadUrl(KANJI), wrong]])});
+            expect(await env.installer.install(KANJI, record)).toBe(false);
+            expect(events.at(-1)?.error?.message).toContain('Unexpected dictionary title');
+            expect(env.getImportCalls()).toBe(0);
+            expect(await titlesInDatabase(env)).toStrictEqual([]);
+            expect((await env.state.load()).dictionaries).toStrictEqual({});
+        });
+
+        test('P2: Retry after a wrong archive runs clean once the asset is fixed', async () => {
+            const served = new Map([[getDictionaryDownloadUrl(KANJI), await createFixtureArchive('ja-vi')]]);
+            const env = await createEnvironment({archives: served});
+            expect(await env.installer.install(KANJI, record)).toBe(false);
+            served.set(getDictionaryDownloadUrl(KANJI), await createFixtureArchive('kanji-vi'));
+            expect(await env.installer.install(KANJI, record)).toBe(true);
+            expect(await titlesInDatabase(env)).toStrictEqual([KANJI.title]);
+        });
+
+        test('P2: if a wrong archive does get imported, it is deleted again', async () => {
+            const served = new Map([[getDictionaryDownloadUrl(KANJI), await createFixtureArchive('ja-vi')]]);
+            // The pre-import check is blind (e.g. an unexpected zip layout); the post-import check must catch it.
+            const env = await createEnvironment({archives: served, overrides: {readArchiveTitle: async () => KANJI.title}});
+            expect(await env.installer.install(KANJI, record)).toBe(false);
+            expect(env.getImportCalls()).toBe(1);
+            expect(events.at(-1)?.error?.message).toContain('Unexpected dictionary title');
+            expect(await titlesInDatabase(env)).toStrictEqual([]);
+            expect(env.options.profiles[0].options.dictionaries).toStrictEqual([]);
+            expect((await env.state.load()).dictionaries).toStrictEqual({});
+        });
+
+        test('a failing cleanup is reported and nothing is recorded', async () => {
+            const env = await createEnvironment({overrides: ({database}) => ({
+                importArchive: async (archive) => {
+                    await new DictionaryImporter(new DictionaryImporterMediaLoader(), () => {}).importDictionary(database, archive, {prefixWildcardsSupported: false, yomitanVersion: '0.0.0.0'});
+                    return {result: null, errors: [new Error('boom')]};
+                },
+                deleteDictionary: async () => { throw new Error('delete failed'); },
+            })});
+            expect(await env.installer.install(TERM, record)).toBe(false);
+            const message = events.at(-1)?.error?.message ?? '';
+            expect(message).toContain('boom');
+            expect(message).toContain('delete failed');
+            expect((await env.state.load()).dictionaries).toStrictEqual({});
+            expect(env.options.profiles[0].options.dictionaries).toStrictEqual([]);
+        });
     });
 });

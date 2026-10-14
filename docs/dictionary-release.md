@@ -51,7 +51,7 @@ Rules:
 1. The welcome page (`fenix-welcome.html`) opens on first install (Yomitan's `general.showGuide`).
 2. For each dictionary that is not installed and was never installed before, it downloads `<name>.zip` with a progress bar, imports it with Yomitan's `DictionaryWorker`, and registers it at the **top** of every profile's dictionary list (`ja-vi` first, then `kanji-vi`); the term dictionary also becomes `general.mainDictionary` when that is empty.
 3. A dictionary that was installed and later removed by the user is not installed again automatically; the page offers an "Cài đặt" button.
-4. A failed download or import is shown with a "Thử lại" button; because nothing is recorded, the next welcome page opens retries automatically.
+4. A failed download or import is shown with a "Thử lại" button. The archive's `index.json` title is checked before importing; an import that reports any error is deleted again, so a failure never leaves a half-imported dictionary behind. Nothing is recorded on failure, so the next welcome page opens retries automatically.
 5. Later updates: Yomitan's manual "Check updates" in the dictionary settings (uses `indexUrl`/`revision`/`downloadUrl`).
 
 ## Testing without the real files

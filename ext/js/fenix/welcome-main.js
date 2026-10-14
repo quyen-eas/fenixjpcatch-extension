@@ -25,6 +25,7 @@ import {DictionaryController} from '../pages/settings/dictionary-controller.js';
 import {GenericSettingController} from '../pages/settings/generic-setting-controller.js';
 import {RecommendedPermissionsController} from '../pages/settings/recommended-permissions-controller.js';
 import {SettingsController} from '../pages/settings/settings-controller.js';
+import {readArchiveTitle} from './archive-index.js';
 import {downloadWithProgress, FenixInstallError} from './dictionary-downloader.js';
 import {FenixDictionaryInstaller} from './dictionary-installer.js';
 import {OnboardingStateStore} from './onboarding-state.js';
@@ -63,6 +64,15 @@ await Application.main(true, async (application) => {
     themeController.siteOverride = true;
     themeController.updateTheme();
 
+    /**
+     * @param {import('settings-modifications').Modification[]} targets
+     * @returns {Promise<Error[]>} The errors of the modifications that failed.
+     */
+    const modifyGlobalSettings = async (targets) => {
+        const results = await settingsController.modifyGlobalSettings(targets);
+        return results.flatMap(({error}) => (typeof error === 'undefined' ? [] : [ExtensionError.deserialize(error)]));
+    };
+
     const state = new OnboardingStateStore();
     const installer = new FenixDictionaryInstaller({
         download: (url, onProgress) => downloadWithProgress(url, onProgress),
@@ -81,16 +91,15 @@ await Application.main(true, async (application) => {
         getDictionaryInfo: () => settingsController.getDictionaryInfo(),
         getOptionsFull: () => settingsController.getOptionsFull(),
         getProfileIndex: () => settingsController.profileIndex,
-        modifyGlobalSettings: async (targets) => {
-            const results = await settingsController.modifyGlobalSettings(targets);
-            return results.flatMap(({error}) => (typeof error === 'undefined' ? [] : [ExtensionError.deserialize(error)]));
-        },
+        modifyGlobalSettings,
+        readArchiveTitle,
+        deleteDictionary: async (title) => { await new DictionaryWorker().deleteDictionary(title, null); },
         notifyDatabaseUpdated: () => application.api.triggerDatabaseUpdated('dictionary', 'import'),
         state,
         createDictionarySettings: (name, enabled, styles) => DictionaryController.createDefaultDictionarySettings(name, enabled, styles ?? ''),
     });
 
-    const welcomeController = new WelcomeController({installer, state, settingsController, getVoices: getSpeechVoices});
+    const welcomeController = new WelcomeController({installer, state, settingsController, modifyGlobalSettings, getVoices: getSpeechVoices});
     welcomeController.prepare();
 
     document.body.hidden = false;

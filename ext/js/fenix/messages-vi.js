@@ -78,6 +78,7 @@ export const MESSAGES_VI = Object.freeze({
     'audio.heading': 'Âm thanh',
     'audio.fallbackAdded': 'Đã thêm giọng đọc của trình duyệt làm nguồn âm thanh dự phòng (sau các nguồn trực tuyến).',
     'audio.fallbackPresent': 'Giọng đọc của trình duyệt đã được dùng làm nguồn âm thanh dự phòng.',
+    'audio.fallbackFailed': 'Chưa ghi được nguồn âm thanh dự phòng vào cài đặt; lần mở sau sẽ thử lại.',
     'audio.noJapaneseVoice': 'Trình duyệt chưa có giọng đọc tiếng Nhật nên chưa thêm nguồn âm thanh dự phòng. Hãy cài giọng tiếng Nhật trong hệ điều hành, lần mở sau sẽ tự thêm.',
 
     'soon.heading': 'Sắp ra mắt',

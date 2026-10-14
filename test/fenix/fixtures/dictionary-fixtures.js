@@ -143,11 +143,14 @@ export function createFixtureFiles(id, revision = 'fixture-1') {
  * Builds the zip archive of a fixture dictionary.
  * @param {string} id Dictionary id from FENIX_DICTIONARIES.
  * @param {string} [revision]
+ * @param {(files: Map<string, unknown>) => void} [mutate] Lets a test damage the archive.
  * @returns {Promise<ArrayBuffer>}
  */
-export async function createFixtureArchive(id, revision) {
+export async function createFixtureArchive(id, revision, mutate) {
     const writer = new ZipWriter(new BlobWriter(), {level: 0}); // Level 0: no decompression support in Node (see dev/lib/zip.js).
-    for (const [name, content] of createFixtureFiles(id, revision)) {
+    const files = createFixtureFiles(id, revision);
+    if (typeof mutate === 'function') { mutate(files); }
+    for (const [name, content] of files) {
         await writer.add(name, new TextReader(JSON.stringify(content)));
     }
     return await (await writer.close()).arrayBuffer();

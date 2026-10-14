@@ -71,7 +71,7 @@ describe('message table', () => {
             }
         }
         // Keys that are assembled at run time.
-        for (const key of ['status.error.download', 'status.error.import', 'status.error.settings']) {
+        for (const key of ['status.error.download', 'status.error.import', 'status.error.settings', 'audio.fallbackAdded', 'audio.fallbackPresent', 'audio.noJapaneseVoice', 'audio.fallbackFailed']) {
             expect(MESSAGES_VI).toHaveProperty([key]);
         }
         for (const {labelKey} of FENIX_DICTIONARIES) {

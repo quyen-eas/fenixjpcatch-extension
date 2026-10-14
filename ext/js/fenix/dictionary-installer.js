@@ -23,6 +23,8 @@ import {buildDictionaryModifications} from './onboarding-settings.js';
  * @typedef {object} InstallerDependencies
  * @property {(url: string, onProgress: (loaded: number, total: number) => void) => Promise<ArrayBuffer>} download
  * @property {(archive: ArrayBuffer, onProgress: import('dictionary-worker').ImportProgressCallback) => Promise<import('dictionary-importer').ImportResult>} importArchive
+ * @property {(archive: ArrayBuffer) => Promise<string>} readArchiveTitle Title from the archive's index.json, without importing.
+ * @property {(title: string) => Promise<void>} deleteDictionary Removes an imported dictionary (data and summary) from the database.
  * @property {() => Promise<import('dictionary-importer').Summary[]>} getDictionaryInfo
  * @property {() => Promise<import('settings').Options>} getOptionsFull
  * @property {() => number} getProfileIndex
@@ -47,6 +49,14 @@ import {buildDictionaryModifications} from './onboarding-settings.js';
  */
 
 /**
+ * @param {import('dictionary-importer').Summary} summary
+ * @returns {boolean} False for a dictionary whose import was interrupted (`importSuccess` is only set by the importer).
+ */
+function isComplete(summary) {
+    return summary.importSuccess !== false;
+}
+
+/**
  * Installs the dictionaries published in the FenixJpCatch release. All side effects are injected, so the whole
  * flow (download → import → register in the profiles) is testable without a browser.
  */
@@ -64,7 +74,7 @@ export class FenixDictionaryInstaller {
      * @returns {Promise<Map<string, boolean>>} dictionary id → installed
      */
     async getInstalled() {
-        const titles = new Set((await this._deps.getDictionaryInfo()).map(({title}) => title));
+        const titles = new Set((await this._deps.getDictionaryInfo()).filter(isComplete).map(({title}) => title));
         return new Map(FENIX_DICTIONARIES.map(({id, title}) => [id, titles.has(title)]));
     }
 
@@ -75,7 +85,12 @@ export class FenixDictionaryInstaller {
      */
     async installFirstRun(onEvent) {
         const state = await this._deps.state.load();
-        const summaries = new Map((await this._deps.getDictionaryInfo()).map((summary) => [summary.title, summary]));
+        const infos = await this._deps.getDictionaryInfo();
+        // A dictionary whose import did not finish is not an installed dictionary: remove it so it is imported again.
+        for (const spec of FENIX_DICTIONARIES) {
+            if (infos.some((info) => info.title === spec.title && !isComplete(info))) { await this._discard(spec.title); }
+        }
+        const summaries = new Map(infos.filter(isComplete).map((summary) => [summary.title, summary]));
         let allInstalled = true;
         for (const spec of FENIX_DICTIONARIES) {
             const summary = summaries.get(spec.title);
@@ -110,18 +125,43 @@ export class FenixDictionaryInstaller {
                 onEvent({spec, phase: 'downloading', loaded, total});
             });
 
+            // Reject a wrong archive before anything is written to the database.
+            const archiveTitle = await this._deps.readArchiveTitle(archive);
+            if (archiveTitle !== spec.title) {
+                throw new FenixInstallError('import', `Unexpected dictionary title "${archiveTitle}" (expected "${spec.title}")`);
+            }
+
+            // From here on the title belongs to this install: anything found under it after a failure is ours to remove.
+            const existing = (await this._deps.getDictionaryInfo()).find(({title}) => title === spec.title);
+            if (typeof existing !== 'undefined') {
+                if (isComplete(existing)) {
+                    // Already imported completely (e.g. by an interrupted run): only the registration is missing.
+                    await this._register(spec, existing);
+                    await this._deps.notifyDatabaseUpdated();
+                    await this._markInstalled(spec);
+                    onEvent({spec, phase: 'installed'});
+                    return true;
+                }
+                await this._discard(spec.title);
+            }
+
             let step = 1;
             onEvent({spec, phase: 'importing', loaded: 0, total: 0, step});
             const {result, errors} = await this._deps.importArchive(archive, ({nextStep, index, count}) => {
                 if (nextStep) { ++step; }
                 onEvent({spec, phase: 'importing', loaded: index, total: count, step});
             });
-            if (!result) {
-                const detail = errors.map((e) => e.message).join('; ') || 'unknown error';
+            // The importer reports row-write failures (and, with a null result, some late failures) *after* it has
+            // written data, so any error means a partial dictionary that must not stay or be recorded as installed.
+            if (!result || errors.length > 0 || result.title !== spec.title || result.importSuccess === false) {
+                const cleanup = await this._discard(spec.title, result?.title);
+                const detail = [
+                    ...errors.map((e) => e.message),
+                    ...(result && result.title !== spec.title ? [`Unexpected dictionary title "${result.title}" (expected "${spec.title}")`] : []),
+                    ...(result && result.importSuccess === false && errors.length === 0 ? ['The import did not finish'] : []),
+                    ...cleanup,
+                ].join('; ') || 'unknown error';
                 throw new FenixInstallError('import', detail);
-            }
-            if (result.title !== spec.title) {
-                throw new FenixInstallError('import', `Unexpected dictionary title "${result.title}" (expected "${spec.title}")`);
             }
 
             await this._register(spec, result);
@@ -137,6 +177,36 @@ export class FenixDictionaryInstaller {
     }
 
     // Private
+
+    /**
+     * Deletes the given dictionaries from the database, best effort.
+     * @param {...(string|undefined)} titles
+     * @returns {Promise<string[]>} Messages for deletions that failed (empty when all went well).
+     */
+    async _discard(...titles) {
+        /** @type {string[]} */
+        const failures = [];
+        let deleted = false;
+        for (const title of new Set(titles)) {
+            if (typeof title === 'undefined') { continue; }
+            const exists = (await this._deps.getDictionaryInfo()).some((info) => info.title === title);
+            if (!exists) { continue; }
+            try {
+                await this._deps.deleteDictionary(title);
+                deleted = true;
+            } catch (e) {
+                failures.push(`Could not remove the partial import "${title}": ${e instanceof Error ? e.message : String(e)}`);
+            }
+        }
+        if (deleted) {
+            try {
+                await this._deps.notifyDatabaseUpdated();
+            } catch (e) {
+                failures.push(e instanceof Error ? e.message : String(e));
+            }
+        }
+        return failures;
+    }
 
     /**
      * @param {import('./dictionary-release.js').FenixDictionarySpec} spec
