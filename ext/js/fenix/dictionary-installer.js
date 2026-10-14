@@ -86,9 +86,14 @@ export class FenixDictionaryInstaller {
     async installFirstRun(onEvent) {
         const state = await this._deps.state.load();
         const infos = await this._deps.getDictionaryInfo();
-        // A dictionary whose import did not finish is not an installed dictionary: remove it so it is imported again.
+        // A partial import that an earlier first-run attempt left behind (marked in the state; we hold the install lock,
+        // so that attempt is dead) is removed so the dictionary is imported again. An unmarked partial import may be
+        // running right now from the settings page: it is never touched (see `install`).
         for (const spec of FENIX_DICTIONARIES) {
-            if (infos.some((info) => info.title === spec.title && !isComplete(info))) { await this._discard(spec.title); }
+            if (state.importing[spec.id] === true && infos.some((info) => info.title === spec.title && !isComplete(info))) {
+                await this._discard(spec.title);
+                await this._setImporting(spec, false);
+            }
         }
         const summaries = new Map(infos.filter(isComplete).map((summary) => [summary.title, summary]));
         let allInstalled = true;
@@ -131,7 +136,6 @@ export class FenixDictionaryInstaller {
                 throw new FenixInstallError('import', `Unexpected dictionary title "${archiveTitle}" (expected "${spec.title}")`);
             }
 
-            // From here on the title belongs to this install: anything found under it after a failure is ours to remove.
             const existing = (await this._deps.getDictionaryInfo()).find(({title}) => title === spec.title);
             if (typeof existing !== 'undefined') {
                 if (isComplete(existing)) {
@@ -142,9 +146,15 @@ export class FenixDictionaryInstaller {
                     onEvent({spec, phase: 'installed'});
                     return true;
                 }
+                if ((await this._deps.state.load()).importing[spec.id] !== true) {
+                    // Not ours: the import may be in progress in the settings page, and deleting it would corrupt it.
+                    throw new FenixInstallError('import', `"${spec.title}" is already being imported or its import did not finish; wait for it or remove it in Settings, then retry`);
+                }
                 await this._discard(spec.title);
             }
 
+            // From here on the title belongs to this install: anything found under it after a failure is ours to remove.
+            await this._setImporting(spec, true);
             let step = 1;
             onEvent({spec, phase: 'importing', loaded: 0, total: 0, step});
             const {result, errors} = await this._deps.importArchive(archive, ({nextStep, index, count}) => {
@@ -155,6 +165,7 @@ export class FenixDictionaryInstaller {
             // written data, so any error means a partial dictionary that must not stay or be recorded as installed.
             if (!result || errors.length > 0 || result.title !== spec.title || result.importSuccess === false) {
                 const cleanup = await this._discard(spec.title, result?.title);
+                if (cleanup.length === 0) { await this._setImporting(spec, false); }
                 const detail = [
                     ...errors.map((e) => e.message),
                     ...(result && result.title !== spec.title ? [`Unexpected dictionary title "${result.title}" (expected "${spec.title}")`] : []),
@@ -226,6 +237,23 @@ export class FenixDictionaryInstaller {
      * @param {import('./dictionary-release.js').FenixDictionarySpec} spec
      */
     async _markInstalled(spec) {
-        await this._deps.state.update((state) => { state.dictionaries[spec.id] = true; });
+        await this._deps.state.update((state) => {
+            state.dictionaries[spec.id] = true;
+            delete state.importing[spec.id];
+        });
+    }
+
+    /**
+     * @param {import('./dictionary-release.js').FenixDictionarySpec} spec
+     * @param {boolean} importing
+     */
+    async _setImporting(spec, importing) {
+        await this._deps.state.update((state) => {
+            if (importing) {
+                state.importing[spec.id] = true;
+            } else {
+                delete state.importing[spec.id];
+            }
+        });
     }
 }

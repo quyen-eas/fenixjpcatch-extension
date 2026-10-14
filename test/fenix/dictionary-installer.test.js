@@ -320,13 +320,65 @@ describe('FenixDictionaryInstaller', () => {
                 },
             })});
             await new DictionaryImporter(new DictionaryImporterMediaLoader(), () => {}).importDictionary(env.database, await createFixtureArchive('ja-vi'), {prefixWildcardsSupported: false, yomitanVersion: '0.0.0.0'});
+            await env.state.update((state) => { state.importing[TERM.id] = true; }); // an earlier first-run attempt started it
             expect(await env.installer.getInstalled()).toStrictEqual(new Map([['ja-vi', false], ['kanji-vi', false]]));
 
             expect(await env.installer.installFirstRun(record)).toBe(true);
             expect(stale).toBe(false); // it was deleted, then imported again
+            expect((await env.state.load()).importing).toStrictEqual({});
             expect(env.getImportCalls()).toBe(2);
             expect(await titlesInDatabase(env)).toStrictEqual([TERM.title, KANJI.title].sort());
             expect(env.options.profiles[0].options.dictionaries.map(({name}) => name)).toStrictEqual([TERM.title, KANJI.title]);
+        });
+
+        test('P1: an attempt that died mid-import leaves a mark, and the next first run cleans up after it', async () => {
+            let crash = true;
+            const env = await createEnvironment({overrides: ({database}) => ({
+                importArchive: async (archive, onProgress) => {
+                    const importer = new DictionaryImporter(new DictionaryImporterMediaLoader(), onProgress);
+                    const summary = await importer.importDictionary(database, archive, {prefixWildcardsSupported: false, yomitanVersion: '0.0.0.0'});
+                    if (crash) { throw new Error('worker killed'); } // e.g. the tab was closed; nothing after this line runs
+                    return summary;
+                },
+            })});
+            expect(await env.installer.install(TERM, record)).toBe(false);
+            expect((await env.state.load()).importing).toStrictEqual({[TERM.id]: true});
+
+            crash = false;
+            // Make the leftover look like what the importer leaves when interrupted.
+            const complete = env.database.getDictionaryInfo.bind(env.database);
+            vi.spyOn(env.database, 'getDictionaryInfo').mockImplementation(async () => (await complete()).map((info) => (info.title === TERM.title && crash === false && !deleted ? {...info, importSuccess: false} : info)));
+            let deleted = false;
+            const remove = env.database.deleteDictionary.bind(env.database);
+            vi.spyOn(env.database, 'deleteDictionary').mockImplementation(async (...args) => {
+                deleted = true;
+                await remove(...args);
+            });
+
+            events = [];
+            expect(await env.installer.installFirstRun(record)).toBe(true);
+            expect(deleted).toBe(true);
+            expect((await env.state.load()).importing).toStrictEqual({});
+            expect(await titlesInDatabase(env)).toStrictEqual([TERM.title, KANJI.title].sort());
+        });
+
+        test('P1: an unfinished import that is not ours (e.g. running from Settings) is never deleted', async () => {
+            let deletions = 0;
+            const env = await createEnvironment({overrides: ({database}) => ({
+                // The importer inserts the summary with importSuccess false while an import is running.
+                getDictionaryInfo: async () => (await database.getDictionaryInfo()).map((info) => (info.title === TERM.title ? {...info, importSuccess: false} : info)),
+                deleteDictionary: async () => { ++deletions; },
+            })});
+            await new DictionaryImporter(new DictionaryImporterMediaLoader(), () => {}).importDictionary(env.database, await createFixtureArchive('ja-vi'), {prefixWildcardsSupported: false, yomitanVersion: '0.0.0.0'});
+
+            expect(await env.installer.installFirstRun(record)).toBe(false);
+            expect(deletions).toBe(0);
+            expect(env.getImportCalls()).toBe(1); // only the kanji dictionary was imported
+            expect(events.filter(({spec, phase}) => spec.id === TERM.id && phase === 'error')).toHaveLength(1);
+            expect(phases(events, KANJI.id).at(-1)).toBe('installed');
+            expect((await env.state.load()).dictionaries).toStrictEqual({[KANJI.id]: true});
+            expect((await env.state.load()).importing).toStrictEqual({});
+            expect(await titlesInDatabase(env)).toContain(TERM.title);
         });
 
         test('P2: an archive with the wrong title is rejected before anything is imported', async () => {
@@ -373,6 +425,7 @@ describe('FenixDictionaryInstaller', () => {
             expect(message).toContain('boom');
             expect(message).toContain('delete failed');
             expect((await env.state.load()).dictionaries).toStrictEqual({});
+            expect((await env.state.load()).importing).toStrictEqual({[TERM.id]: true}); // still ours to clean up next time
             expect(env.options.profiles[0].options.dictionaries).toStrictEqual([]);
         });
     });
