@@ -157,10 +157,18 @@ export class FenixDictionaryInstaller {
             await this._setImporting(spec, true);
             let step = 1;
             onEvent({spec, phase: 'importing', loaded: 0, total: 0, step});
-            const {result, errors} = await this._deps.importArchive(archive, ({nextStep, index, count}) => {
-                if (nextStep) { ++step; }
-                onEvent({spec, phase: 'importing', loaded: index, total: count, step});
-            });
+            let imported;
+            try {
+                imported = await this._deps.importArchive(archive, ({nextStep, index, count}) => {
+                    if (nextStep) { ++step; }
+                    onEvent({spec, phase: 'importing', loaded: index, total: count, step});
+                });
+            } catch (e) {
+                // A rejection before the importer inserted its summary (e.g. invalid data) leaves nothing that is ours.
+                await this._releaseIfNothingWritten(spec);
+                throw e;
+            }
+            const {result, errors} = imported;
             // The importer reports row-write failures (and, with a null result, some late failures) *after* it has
             // written data, so any error means a partial dictionary that must not stay or be recorded as installed.
             if (!result || errors.length > 0 || result.title !== spec.title || result.importSuccess === false) {
@@ -241,6 +249,20 @@ export class FenixDictionaryInstaller {
             state.dictionaries[spec.id] = true;
             delete state.importing[spec.id];
         });
+    }
+
+    /**
+     * Clears the ownership mark when the database holds nothing under the dictionary's title. Never throws: it runs
+     * while another error is being handled, and keeping the mark is the safe outcome.
+     * @param {import('./dictionary-release.js').FenixDictionarySpec} spec
+     */
+    async _releaseIfNothingWritten(spec) {
+        try {
+            const exists = (await this._deps.getDictionaryInfo()).some(({title}) => title === spec.title);
+            if (!exists) { await this._setImporting(spec, false); }
+        } catch (e) {
+            // Keep the mark.
+        }
     }
 
     /**

@@ -389,6 +389,35 @@ describe('FenixDictionaryInstaller', () => {
             expect(env.options.profiles[0].options.dictionaries.map(({name}) => name)).toStrictEqual([TERM.title, KANJI.title]);
         });
 
+        test('P1: a rejection before anything was written clears the mark, so a later Settings import is never taken for ours', async () => {
+            let reject = true;
+            let settingsImport = false;
+            let deletions = 0;
+            const env = await createEnvironment({overrides: ({database}) => ({
+                importArchive: async (archive, onProgress) => {
+                    if (reject) { throw new Error('invalid term bank'); } // e.g. the validation failing before any write
+                    return await new DictionaryImporter(new DictionaryImporterMediaLoader(), onProgress).importDictionary(database, archive, {prefixWildcardsSupported: false, yomitanVersion: '0.0.0.0'});
+                },
+                // From the moment the user starts importing from Settings, the unfinished summary is theirs.
+                getDictionaryInfo: async () => (await database.getDictionaryInfo()).map((info) => (settingsImport && info.title === TERM.title ? {...info, importSuccess: false} : info)),
+                deleteDictionary: async (title) => {
+                    ++deletions;
+                    await database.deleteDictionary(title, 1000, () => {});
+                },
+            })});
+
+            expect(await env.installer.install(TERM, record)).toBe(false);
+            expect(events.at(-1)?.error?.message).toContain('invalid term bank');
+            expect((await env.state.load()).importing).toStrictEqual({});
+
+            reject = false;
+            settingsImport = true;
+            await new DictionaryImporter(new DictionaryImporterMediaLoader(), () => {}).importDictionary(env.database, await createFixtureArchive('ja-vi'), {prefixWildcardsSupported: false, yomitanVersion: '0.0.0.0'});
+            await env.installer.installFirstRun(record);
+            expect(deletions).toBe(0);
+            expect(await titlesInDatabase(env)).toContain(TERM.title);
+        });
+
         test('P1: an unfinished import that is not ours (e.g. running from Settings) is never deleted', async () => {
             let deletions = 0;
             const env = await createEnvironment({overrides: ({database}) => ({
