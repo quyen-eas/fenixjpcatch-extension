@@ -362,6 +362,33 @@ describe('FenixDictionaryInstaller', () => {
             expect(await titlesInDatabase(env)).toStrictEqual([TERM.title, KANJI.title].sort());
         });
 
+        test('P2: a failed cleanup of an abandoned import keeps the mark, so a later run can still remove it', async () => {
+            let failDeletes = true;
+            let stale = true;
+            const env = await createEnvironment({overrides: ({database}) => ({
+                getDictionaryInfo: async () => (await database.getDictionaryInfo()).map((info) => (stale && info.title === TERM.title ? {...info, importSuccess: false} : info)),
+                deleteDictionary: async (title) => {
+                    if (failDeletes) { throw new Error('IndexedDB busy'); }
+                    await database.deleteDictionary(title, 1000, () => {});
+                    stale = false;
+                },
+            })});
+            await new DictionaryImporter(new DictionaryImporterMediaLoader(), () => {}).importDictionary(env.database, await createFixtureArchive('ja-vi'), {prefixWildcardsSupported: false, yomitanVersion: '0.0.0.0'});
+            await env.state.update((state) => { state.importing[TERM.id] = true; });
+
+            expect(await env.installer.installFirstRun(record)).toBe(false);
+            expect((await env.state.load()).importing).toStrictEqual({[TERM.id]: true}); // still ours
+            expect(events.some(({spec, phase, error}) => spec.id === TERM.id && phase === 'error' && error?.message.includes('IndexedDB busy'))).toBe(true);
+            expect(phases(events, KANJI.id).at(-1)).toBe('installed');
+
+            failDeletes = false;
+            events = [];
+            expect(await env.installer.installFirstRun(record)).toBe(true);
+            expect(stale).toBe(false);
+            expect((await env.state.load()).importing).toStrictEqual({});
+            expect(env.options.profiles[0].options.dictionaries.map(({name}) => name)).toStrictEqual([TERM.title, KANJI.title]);
+        });
+
         test('P1: an unfinished import that is not ours (e.g. running from Settings) is never deleted', async () => {
             let deletions = 0;
             const env = await createEnvironment({overrides: ({database}) => ({

@@ -90,10 +90,9 @@ export class FenixDictionaryInstaller {
         // so that attempt is dead) is removed so the dictionary is imported again. An unmarked partial import may be
         // running right now from the settings page: it is never touched (see `install`).
         for (const spec of FENIX_DICTIONARIES) {
-            if (state.importing[spec.id] === true && infos.some((info) => info.title === spec.title && !isComplete(info))) {
-                await this._discard(spec.title);
-                await this._setImporting(spec, false);
-            }
+            const abandoned = state.importing[spec.id] === true && infos.some((info) => info.title === spec.title && !isComplete(info));
+            // Keep the mark when the deletion failed: without it the leftover would look like somebody else's import.
+            if (abandoned && (await this._discard(spec.title)).length === 0) { await this._setImporting(spec, false); }
         }
         const summaries = new Map(infos.filter(isComplete).map((summary) => [summary.title, summary]));
         let allInstalled = true;
@@ -150,7 +149,8 @@ export class FenixDictionaryInstaller {
                     // Not ours: the import may be in progress in the settings page, and deleting it would corrupt it.
                     throw new FenixInstallError('import', `"${spec.title}" is already being imported or its import did not finish; wait for it or remove it in Settings, then retry`);
                 }
-                await this._discard(spec.title);
+                const cleanup = await this._discard(spec.title);
+                if (cleanup.length > 0) { throw new FenixInstallError('import', cleanup.join('; ')); }
             }
 
             // From here on the title belongs to this install: anything found under it after a failure is ours to remove.
