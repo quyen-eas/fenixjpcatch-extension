@@ -92,7 +92,7 @@ export class FenixDictionaryInstaller {
         for (const spec of FENIX_DICTIONARIES) {
             const abandoned = state.importing[spec.id] === true && infos.some((info) => info.title === spec.title && !isComplete(info));
             // Keep the mark when the deletion failed: without it the leftover would look like somebody else's import.
-            if (abandoned && (await this._discard(spec.title)).length === 0) { await this._setImporting(spec, false); }
+            if (abandoned && (await this._discard(spec.title)).removed) { await this._setImporting(spec, false); }
         }
         const summaries = new Map(infos.filter(isComplete).map((summary) => [summary.title, summary]));
         let allInstalled = true;
@@ -150,7 +150,7 @@ export class FenixDictionaryInstaller {
                     throw new FenixInstallError('import', `"${spec.title}" is already being imported or its import did not finish; wait for it or remove it in Settings, then retry`);
                 }
                 const cleanup = await this._discard(spec.title);
-                if (cleanup.length > 0) { throw new FenixInstallError('import', cleanup.join('; ')); }
+                if (!cleanup.removed) { throw new FenixInstallError('import', cleanup.failures.join('; ')); }
             }
 
             // From here on the title belongs to this install: anything found under it after a failure is ours to remove.
@@ -173,12 +173,12 @@ export class FenixDictionaryInstaller {
             // written data, so any error means a partial dictionary that must not stay or be recorded as installed.
             if (!result || errors.length > 0 || result.title !== spec.title || result.importSuccess === false) {
                 const cleanup = await this._discard(spec.title, result?.title);
-                if (cleanup.length === 0) { await this._setImporting(spec, false); }
+                if (cleanup.removed) { await this._setImporting(spec, false); }
                 const detail = [
                     ...errors.map((e) => e.message),
                     ...(result && result.title !== spec.title ? [`Unexpected dictionary title "${result.title}" (expected "${spec.title}")`] : []),
                     ...(result && result.importSuccess === false && errors.length === 0 ? ['The import did not finish'] : []),
-                    ...cleanup,
+                    ...cleanup.failures,
                 ].join('; ') || 'unknown error';
                 throw new FenixInstallError('import', detail);
             }
@@ -200,11 +200,13 @@ export class FenixDictionaryInstaller {
     /**
      * Deletes the given dictionaries from the database, best effort.
      * @param {...(string|undefined)} titles
-     * @returns {Promise<string[]>} Messages for deletions that failed (empty when all went well).
+     * @returns {Promise<{removed: boolean, failures: string[]}>} `removed` is false when a deletion failed; `failures` also
+     *   carries a failed update notification, which leaves `removed` true.
      */
     async _discard(...titles) {
         /** @type {string[]} */
         const failures = [];
+        let removed = true;
         let deleted = false;
         for (const title of new Set(titles)) {
             if (typeof title === 'undefined') { continue; }
@@ -214,17 +216,19 @@ export class FenixDictionaryInstaller {
                 await this._deps.deleteDictionary(title);
                 deleted = true;
             } catch (e) {
+                removed = false;
                 failures.push(`Could not remove the partial import "${title}": ${e instanceof Error ? e.message : String(e)}`);
             }
         }
         if (deleted) {
+            // Not delivering the notification does not undo a deletion: it is reported, but does not make `removed` false.
             try {
                 await this._deps.notifyDatabaseUpdated();
             } catch (e) {
                 failures.push(e instanceof Error ? e.message : String(e));
             }
         }
-        return failures;
+        return {removed, failures};
     }
 
     /**

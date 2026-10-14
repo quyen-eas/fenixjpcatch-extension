@@ -418,6 +418,32 @@ describe('FenixDictionaryInstaller', () => {
             expect(await titlesInDatabase(env)).toContain(TERM.title);
         });
 
+        test('P2: a failed update notification after a successful deletion still clears the mark', async () => {
+            let stale = true;
+            let notifications = 0;
+            // The download fails afterwards, so the state right after the cleanup stays observable.
+            const failUrls = new Set([getDictionaryDownloadUrl(TERM)]);
+            const env = await createEnvironment({failUrls,
+                overrides: ({database}) => ({
+                    getDictionaryInfo: async () => (await database.getDictionaryInfo()).map((info) => (stale && info.title === TERM.title ? {...info, importSuccess: false} : info)),
+                    deleteDictionary: async (title) => {
+                        await database.deleteDictionary(title, 1000, () => {});
+                        stale = false;
+                    },
+                    notifyDatabaseUpdated: async () => {
+                        ++notifications;
+                        if (notifications === 1) { throw new Error('no receiver'); }
+                    },
+                })});
+            await new DictionaryImporter(new DictionaryImporterMediaLoader(), () => {}).importDictionary(env.database, await createFixtureArchive('ja-vi'), {prefixWildcardsSupported: false, yomitanVersion: '0.0.0.0'});
+            await env.state.update((state) => { state.importing[TERM.id] = true; });
+
+            expect(await env.installer.installFirstRun(record)).toBe(false); // only the download of TERM failed
+            expect(events.some(({spec, phase, error}) => spec.id === TERM.id && phase === 'error' && error?.code === 'download')).toBe(true);
+            expect(stale).toBe(false);
+            expect((await env.state.load()).importing).toStrictEqual({});
+        });
+
         test('P1: an unfinished import that is not ours (e.g. running from Settings) is never deleted', async () => {
             let deletions = 0;
             const env = await createEnvironment({overrides: ({database}) => ({
