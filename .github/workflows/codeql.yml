@@ -24,6 +24,10 @@ on:
 jobs:
   analyze:
     name: Analyze
+    # Modified by FenixJpCatch: code scanning needs GitHub Advanced Security on private repositories
+    # ("Code scanning is not enabled for this repository"). Skipped while the repository is private.
+    # TODO(public): nothing to change; the job starts running as soon as the repository is public and code scanning is enabled.
+    if: github.event.repository.private == false
     # Runner size impacts CodeQL analysis time. To learn more, please see:
     #   - https://gh.io/recommended-hardware-resources-for-running-codeql
     #   - https://gh.io/supported-runners-and-hardware-resources

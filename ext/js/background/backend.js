@@ -2867,7 +2867,8 @@ export class Backend {
      * @returns {Promise<void>}
      */
     async _openWelcomeGuidePage() {
-        await this._createTab(chrome.runtime.getURL('/welcome.html'));
+        // Modified by FenixJpCatch: open the Vietnamese welcome page; the original is still reachable at /welcome.html.
+        await this._createTab(chrome.runtime.getURL('/fenix-welcome.html'));
     }
 
     /**

@@ -1,0 +1,21 @@
+/*
+ * Styles for the pages added by FenixJpCatch (fenix-welcome.html, fenix-about.html).
+ * Builds on settings.css; nothing here overrides upstream pages.
+ */
+
+.fenix-dictionary-row .fenix-dictionary-status {
+    margin-top: 0.5em;
+}
+.fenix-dictionary-row .fenix-dictionary-progress {
+    margin-top: 0.5em;
+}
+.fenix-dictionary-row .fenix-dictionary-error {
+    margin-top: 0.5em;
+}
+.fenix-about-list {
+    margin: 0;
+    padding-left: 1.25em;
+}
+.fenix-about-list li:not(:first-child) {
+    margin-top: 0.5em;
+}

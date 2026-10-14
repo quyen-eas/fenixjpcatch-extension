@@ -7,7 +7,7 @@ Technical notes for working in this repo. Language rules: code, comments, commit
 - Golden rule: **keep every Yomitan feature; only add**. Prefer new modules + existing extension points; minimize diff against upstream so `git merge upstream/master` stays cheap.
 - No secrets in this repo. Firebase web config is public; anything else goes through `.env.example`.
 
-> Status: Phase 0 done and confirmed by the owner (2026-10-08). Next: Phase 1 happens in the private repo; this repo next changes in Phase 2. No functional change yet.
+> Status: Phase 0 done and confirmed (2026-10-08). Phase 1 happens in the private repo. Phase 2 (onboarding: first-run dictionary install, Vietnamese welcome + About, audio TTS fallback) is implemented on branch `phase-2/onboarding` — see section 8. Next in this repo: Phase 3 (cloud/☆).
 
 ---
 
@@ -177,3 +177,22 @@ See `docs/upstream-sync.md`. Keep branding diffs confined to: `dev/data/manifest
 - `.env` (tracked) only contains `PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS=1` for Playwright — not a secret.
 - `PRIVACY-POLICY.md` states Yomitan sends no data externally; it must be updated when the save-word feature lands (data is sent only when the user presses ☆).
 - Husky/lint-staged are set up (`npm ci --ignore-scripts` skips the hook install in automation).
+
+## 8. Phase 2 — onboarding (implemented)
+
+Code lives in `ext/js/fenix/` (sibling of the future `ext/js/cloud/`); entirely new files carry the fork header "Copyright (C) 2026 Fenix Labs" (separate `header/header` block at the end of `eslint.config.js`).
+
+- **Entry point:** `Backend._openWelcomeGuidePage` opens `/fenix-welcome.html` (the only functional edit in upstream code). Yomitan's `/welcome.html` is untouched and linked from ours; `showGuide` keeps its upstream meaning (page opens once per browser session while it is on), which doubles as the retry trigger for a failed install.
+- **First-run installer** (`dictionary-installer.js`, DI so it is testable): per dictionary of `FENIX_DICTIONARIES` (`dictionary-release.js`) → `downloadWithProgress` (fetch, idle timeout) → `DictionaryWorker.importDictionary` (same as the settings page) → splice into every profile's `dictionaries[]` at the top (`onboarding-settings.js`, canonical order `ja-vi`, `kanji-vi`) → `triggerDatabaseUpdated`. State in `chrome.storage.local['fenixOnboarding']` (`onboarding-state.js`): a dictionary the user deleted later is not reinstalled; a failed one is not recorded, so it is retried. Web Locks (`fenix-dictionary-install`) serialize concurrent welcome tabs. Archive title must equal the documented one (`docs/dictionary-release.md`).
+- **Audio:** TTS fallback is applied from the welcome page, not via schema defaults (no options migration): the built-in `ja` sources are written out explicitly followed by `text-to-speech-reading` with the best `ja` voice (voices only exist in a page context). Default sources are otherwise appended _after_ configured ones, so adding only TTS would make it primary. No Japanese voice → nothing added, retried on the next welcome open.
+- **i18n:** `i18n.js` (`t(key, params)`, `data-i18n*` attributes) + `messages-vi.js`. A unit test checks that every key used in the HTML/JS exists. Upstream pages stay English.
+- **Tests:** `test/fenix/*` (vitest, fixture dictionaries built in memory by `test/fenix/fixtures/dictionary-fixtures.js`, real importer on fake-indexeddb) and `test/playwright/fenix-onboarding.spec.js` (real Chromium; release URL served from fixtures). `playwright-util.js` aborts the release URL by default so no test hits the network. The installed Chromium in cloud sandboxes may not match Playwright's expected revision; symlink it into `/opt/pw-browsers/chromium-<rev>/chrome-linux/chrome` locally (not in the repo).
+- **Known limits:** About/welcome pages are reachable from the welcome page only (no action-popup entry yet); `showGuide` default unchanged (welcome opens at every browser start until the user turns it off).
+
+### 8.1 CI notes (Phase 2 follow-up)
+
+- **Node is pinned to 22** in `.github/actions/setup` (package.json only says `>=22`, which resolves to the newest Node). Playwright 1.49.1 hangs forever at test discovery on Node 24 (`npx playwright test --list` never returns; reproduced with 24.21.0). Drop the pin after upgrading `@playwright/test`.
+- **Private repo:** `CodeQL` and `dependency-review` run only when `github.event.repository.private == false` (they need GitHub Advanced Security). `playwright.yml` has `actions: read` for the baseline download. `.lycheeignore` has temporary entries for this repo's Releases/issues/pulls (TODO remove when public).
+- **Playwright baseline:** upstream skips every PR test while `main` has no successful run with screenshots. We run them in update mode instead, so PR runs execute the functional tests but compare no screenshots; the first successful push run on `main` creates the baseline. PR runs are non-blocking by upstream design (`|| true`), so read the shard logs (the `list` reporter is on in CI) rather than the check colour.
+- **Link checker:** concurrency 10, retries, and transient 408/429/502/503/504 accepted; `gnu.org/licenses` skipped (rate limits/timeouts).
+- `test/playwright/playwright-util.js`: the Anki mock answers `canAddNotes*` once per submitted note (it returned a fixed pair, which made `integration.spec › anki add` fail on upstream code at the fork base).

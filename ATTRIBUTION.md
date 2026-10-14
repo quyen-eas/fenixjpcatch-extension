@@ -21,6 +21,7 @@ The dictionaries distributed for use with this extension are derived from the fo
 | [KANJIDIC2](https://www.edrdg.org/wiki/index.php/KANJIDIC_Project) | Kanji readings, meanings, stroke counts, Sino-Vietnamese readings | [EDRDG licence](https://www.edrdg.org/edrdg/licence.html) (CC BY-SA 4.0) |
 | [KRADFILE](https://www.edrdg.org/krad/kradinf.html)                | Kanji components                                                  | [EDRDG licence](https://www.edrdg.org/edrdg/licence.html)                |
 | [JmdictFurigana](https://github.com/Doublevil/JmdictFurigana)      | Furigana alignment                                                | CC BY-SA                                                                 |
+| [wordfreq](https://github.com/rspeer/wordfreq)                     | Word frequency data                                               | Data: CC BY-SA 4.0 (code: Apache-2.0)                                    |
 
 This product uses the JMdict, KANJIDIC2 and KRADFILE dictionary files. These files are the property of the Electronic Dictionary Research and Development Group, and are used in conformance with the Group's [licence](https://www.edrdg.org/edrdg/licence.html).
 

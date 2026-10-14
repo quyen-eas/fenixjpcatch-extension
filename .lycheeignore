@@ -15,3 +15,13 @@
 ^https://foosoft.net/projects/anki-connect
 ^https://www.npmjs.com
 ^https://lingualibre.org/$
+
+# Modified by FenixJpCatch.
+# TODO(public): remove these two entries once the repository is public and the first Release (with the dictionary assets)
+# exists. Until then the URLs answer 404 to anyone without access.
+^https://github\.com/quyen-eas/fenixjpcatch-extension/releases/
+^https://github\.com/quyen-eas/fenixjpcatch-extension/(issues|pulls)
+
+# Modified by FenixJpCatch: gnu.org often answers GitHub-hosted runners with 429 or times out (seen on ext/fenix-about.html);
+# the GPL link is a stable canonical URL, so it is not checked.
+^https://www\.gnu\.org/licenses/
