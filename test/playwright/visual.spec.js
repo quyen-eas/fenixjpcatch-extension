@@ -36,6 +36,24 @@ test('welcome', async ({page, extensionId}) => {
     // Take a screenshot of the welcome page
     await expect.soft(page).toHaveScreenshot('welcome-page.png');
 });
+
+test('fenix-welcome', async ({page, extensionId}) => {
+    await page.goto(`chrome-extension://${extensionId}/fenix-welcome.html`);
+    await expect(page.locator('h1')).toHaveText('Chào mừng đến với FenixJpCatch');
+    await expect.soft(page).toHaveScreenshot('fenix-welcome-page.png');
+});
+
+test('fenix-about', async ({page, extensionId}) => {
+    await page.goto(`chrome-extension://${extensionId}/fenix-about.html`);
+    await expect(page.locator('h1')).toHaveText('FenixJpCatch');
+    await expect.soft(page).toHaveScreenshot('fenix-about-page.png');
+});
+
+test('action-popup', async ({page, extensionId}) => {
+    await page.goto(`chrome-extension://${extensionId}/action-popup.html`);
+    await expect(page.locator('.fenix-popup-title')).toHaveText('FenixJpCatch');
+    await expect.soft(page).toHaveScreenshot('action-popup.png');
+});
 test.describe('settings', () => {
     test('local load of jmdict_english', async ({page, extensionId}) => {
         // Open settings

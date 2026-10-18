@@ -105,6 +105,9 @@ export class WelcomeController {
         });
         await this._applyAudioFallback();
         this._updateSummary(allInstalled);
+        if (allInstalled) {
+            await this._disableShowGuide();
+        }
     }
 
     /**
@@ -121,7 +124,11 @@ export class WelcomeController {
             prevention.end();
         }
         const installed = await this._installer.getInstalled();
-        this._updateSummary([...installed.values()].every(Boolean));
+        const allInstalled = [...installed.values()].every(Boolean);
+        this._updateSummary(allInstalled);
+        if (allInstalled) {
+            await this._disableShowGuide();
+        }
     }
 
     /**
@@ -249,5 +256,17 @@ export class WelcomeController {
     _showAudioNote(key) {
         this._audioNote.textContent = t(key);
         this._audioNote.hidden = false;
+    }
+
+    /**
+     * Once all dictionaries are installed, turns off the welcome page auto-open on startup.
+     */
+    async _disableShowGuide() {
+        try {
+            await this._modifyGlobalSettings([{action: 'set', path: 'general.showGuide', value: false}]);
+        } catch (e) {
+            // Disabling showGuide is a convenience; don't break the page if settings write fails.
+            log.warn(e);
+        }
     }
 }

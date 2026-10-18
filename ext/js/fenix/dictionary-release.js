@@ -17,15 +17,18 @@
 
 /**
  * Naming convention of the dictionaries that FenixJpCatch installs on first run.
- * Must stay in sync with docs/dictionary-release.md (the platform repository builds the
+ * Must stay in sync with docs/dictionary-release.md (the dictionary build pipeline builds the
  * archives to exactly this convention).
  */
 
-/** GitHub repository whose latest Release hosts the dictionary archives. */
+/** GitHub repository whose releases host the dictionary archives. */
 export const RELEASE_REPOSITORY = 'quyen-eas/fenixjpcatch-extension';
 
-/** Base URL; `latest/download/<asset>` always redirects to the newest published Release. */
-export const RELEASE_DOWNLOAD_BASE_URL = `https://github.com/${RELEASE_REPOSITORY}/releases/latest/download`;
+/** Rolling tag that always points to the latest dictionary release. */
+export const DICTIONARY_LATEST_TAG = 'dict-latest';
+
+/** Base URL; points to the rolling Release tag dict-latest instead of releases/latest. */
+export const RELEASE_DOWNLOAD_BASE_URL = `https://github.com/${RELEASE_REPOSITORY}/releases/download/${DICTIONARY_LATEST_TAG}`;
 
 /**
  * @typedef {object} FenixDictionarySpec

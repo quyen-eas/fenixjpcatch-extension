@@ -25,6 +25,15 @@ export const MESSAGES_VI = Object.freeze({
     'app.name': 'FenixJpCatch',
     'common.version': 'Phiên bản {version}',
 
+    // Action popup
+    'popup.fenix.title': 'FenixJpCatch',
+    'popup.fenix.welcome': 'Hướng dẫn',
+    'popup.fenix.about': 'Giới thiệu',
+    'popup.fenix.savedWords': 'Từ đã lưu',
+    'popup.fenix.savedWordsSoon': 'Từ đã lưu (sắp có)',
+    'popup.fenix.login': 'Đăng nhập',
+    'popup.fenix.loginSoon': 'Đăng nhập (sắp có)',
+
     // Welcome page
     'welcome.pageTitle': 'Chào mừng đến với FenixJpCatch',
     'welcome.heading': 'Chào mừng đến với FenixJpCatch',
