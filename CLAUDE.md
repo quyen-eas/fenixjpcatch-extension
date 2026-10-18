@@ -7,7 +7,7 @@ Technical notes for working in this repo. Language rules: code, comments, commit
 - Golden rule: **keep every Yomitan feature; only add**. Prefer new modules + existing extension points; minimize diff against upstream so `git merge upstream/master` stays cheap.
 - No secrets in this repo. Firebase web config is public; anything else goes through `.env.example`.
 
-> Status: Phase 0 done and confirmed (2026-10-08). Phase 1 happens in the private repo. Phase 2 (onboarding: first-run dictionary install, Vietnamese welcome + About, audio TTS fallback) is implemented on branch `phase-2/onboarding` — see section 8. Next in this repo: Phase 3 (cloud/☆).
+> Status: Phase 2.1 completed (onboarding, dictionary release via dict-latest, action popup integration, public readiness). Next in this repo: Phase 3 (cloud/☆).
 
 ---
 
@@ -187,7 +187,7 @@ Code lives in `ext/js/fenix/` (sibling of the future `ext/js/cloud/`); entirely 
 - **Audio:** TTS fallback is applied from the welcome page, not via schema defaults (no options migration): the built-in `ja` sources are written out explicitly followed by `text-to-speech-reading` with the best `ja` voice (voices only exist in a page context). Default sources are otherwise appended _after_ configured ones, so adding only TTS would make it primary. No Japanese voice → nothing added, retried on the next welcome open. `audioFallbackApplied` (`audio-fallback.js`) is written only after every settings modification succeeded.
 - **i18n:** `i18n.js` (`t(key, params)`, `data-i18n*` attributes) + `messages-vi.js`. A unit test checks that every key used in the HTML/JS exists. Upstream pages stay English.
 - **Tests:** `test/fenix/*` (vitest, fixture dictionaries built in memory by `test/fenix/fixtures/dictionary-fixtures.js`, real importer on fake-indexeddb) and `test/playwright/fenix-onboarding.spec.js` (real Chromium; release URL served from fixtures). `playwright-util.js` aborts the release URL by default so no test hits the network. The installed Chromium in cloud sandboxes may not match Playwright's expected revision; symlink it into `/opt/pw-browsers/chromium-<rev>/chrome-linux/chrome` locally (not in the repo).
-- **Known limits:** About/welcome pages are reachable from the welcome page only (no action-popup entry yet); `showGuide` default unchanged (welcome opens at every browser start until the user turns it off).
+- **Phase 2.1 updates:** About/welcome pages are now accessible directly from the action popup menu; `showGuide` is automatically turned off once all dictionaries are installed so the guide does not re-open every session; dictionary releases use the dedicated rolling tag `dict-latest` (plus `dict-<revision>`) instead of `releases/latest` to avoid collision with extension builds.
 
 ### 8.1 CI notes (Phase 2 follow-up)
 

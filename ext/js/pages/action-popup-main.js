@@ -19,6 +19,7 @@
 import {ThemeController} from '../app/theme-controller.js';
 import {Application} from '../application.js';
 import {getAllPermissions, hasRequiredPermissionsForOptions} from '../data/permissions-util.js';
+import {applyTranslations} from '../fenix/i18n.js';
 import {HotkeyHelpController} from '../input/hotkey-help-controller.js';
 import {HotkeyUtil} from '../input/hotkey-util.js';
 
@@ -50,6 +51,8 @@ class DisplayController {
         void this._setupEnvironment();
         this._setupButtonEvents('.action-open-search', 'openSearchPage', chrome.runtime.getURL('/search.html'), this._onSearchClick.bind(this));
         this._setupButtonEvents('.action-open-info', 'openInfoPage', chrome.runtime.getURL('/info.html'));
+        applyTranslations(document);
+        this._setupFenixLinks();
 
         const optionsFull = await this._api.optionsGetFull();
         this._optionsFull = optionsFull;
@@ -179,6 +182,25 @@ class DisplayController {
                 node.target = '_blank';
                 node.rel = 'noopener';
             }
+        }
+    }
+
+    // Added by Fenix Labs for FenixJpCatch (Phase 2.1)
+    /** */
+    _setupFenixLinks() {
+        const welcome = document.querySelector('.action-open-fenix-welcome');
+        if (welcome !== null) {
+            welcome.addEventListener('click', (e) => {
+                e.preventDefault();
+                void chrome.tabs.create({url: chrome.runtime.getURL('/fenix-welcome.html')});
+            });
+        }
+        const about = document.querySelector('.action-open-fenix-about');
+        if (about !== null) {
+            about.addEventListener('click', (e) => {
+                e.preventDefault();
+                void chrome.tabs.create({url: chrome.runtime.getURL('/fenix-about.html')});
+            });
         }
     }
 

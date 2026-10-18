@@ -31,6 +31,11 @@ Policy: the fork only **adds** to Yomitan; no upstream feature is removed or hid
 | `playwright.config.js`                       | CI also prints the `list` reporter (progress was invisible with `blob` only) (Phase 2 CI)                                                                                                                                                                                                                                                        |
 | `test/data/vitest.json.config.json`          | `testTimeout: 120000` for the slow tsc-based JSON type checks, which hit vitest's 5 s default on CI runners (Phase 2 CI)                                                                                                                                                                                                                         |
 | `.lycheeignore`                              | Temporary entries for this repository's Releases/issues/pulls URLs while it is private (TODO remove when public); `www.gnu.org/licenses/` is skipped because it rate-limits/times out on CI runners (Phase 2 CI)                                                                                                                                 |
+| `PRIVACY-POLICY.md`                          | Updated to bilingual (EN + VI), added disclaimer, detailed offline-first lookup and static dictionary download egress (Phase 2.1)                                                                                                                                                                                                                |
+| `ext/action-popup.html`                      | Added FenixJpCatch section with guide, about, and placeholders for saved words and sign in (Phase 2.1)                                                                                                                                                                                                                                           |
+| `ext/css/action-popup.css`                   | Added styles for the FenixJpCatch action popup section (Phase 2.1)                                                                                                                                                                                                                                                                               |
+| `ext/js/pages/action-popup-main.js`          | Added click navigation for FenixJpCatch action popup links (Phase 2.1)                                                                                                                                                                                                                                                                           |
+| `test/playwright/visual.spec.js`             | Added visual snapshot coverage for `fenix-welcome`, `fenix-about`, and `action-popup` (Phase 2.1)                                                                                                                                                                                                                                                |
 
 ### Removed upstream files
 
@@ -40,8 +45,9 @@ Upstream release/publishing automation that depends on upstream's store accounts
 ### Added files
 
 - `CLAUDE.md`, `ATTRIBUTION.md`, `CHANGES.md`, `docs/upstream-sync.md`
+- `docs/public-checklist.md` (Phase 2.1)
 - Phase 2 (onboarding):
   - `ext/js/fenix/` — first-run dictionary installer, Vietnamese welcome and About pages, small i18n layer (`dictionary-release.js`, `dictionary-downloader.js`, `dictionary-installer.js`, `archive-index.js`, `audio-fallback.js`, `onboarding-settings.js`, `onboarding-state.js`, `i18n.js`, `messages-vi.js`, `welcome-*.js`, `about-main.js`)
   - `ext/fenix-welcome.html`, `ext/fenix-about.html`, `ext/css/fenix.css`
-  - `docs/dictionary-release.md` — naming convention of the dictionary Release assets
-  - `test/fenix/` (unit tests and fixture dictionaries), `test/playwright/fenix-onboarding.spec.js`
+  - `docs/dictionary-release.md` — naming convention of the dictionary Release assets (updated in Phase 2.1 to `dict-latest` rolling tag)
+  - `test/fenix/` (unit tests and fixture dictionaries, including `welcome-controller.test.js` in Phase 2.1), `test/playwright/fenix-onboarding.spec.js`

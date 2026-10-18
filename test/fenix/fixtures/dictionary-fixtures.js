@@ -19,7 +19,7 @@ import {BlobWriter, TextReader, ZipWriter} from '@zip.js/zip.js';
 import {FENIX_DICTIONARIES, getDictionaryDownloadUrl, getDictionaryIndexUrl} from '../../../ext/js/fenix/dictionary-release.js';
 
 /**
- * Small, well-formed stand-ins for the real FenixJpCatch dictionaries (which are built in the platform repository).
+ * Small, well-formed stand-ins for the real FenixJpCatch dictionaries (which are built separately).
  * They exist only to exercise download → import → registration; every gloss is marked as test data and none of the
  * content is meant to be correct dictionary material. Sequence numbers start at 9,000,001 so they can never be
  * mistaken for real JMdict `ent_seq` values.

@@ -86,6 +86,7 @@ test('first run installs the bundled dictionaries and they can be looked up', as
     const names = {dictionaries: dictionaries.map(({name, enabled}) => [name, enabled]), main: general.mainDictionary};
     expect(names.dictionaries).toStrictEqual([['FenixJpCatch JA-VI', true], ['FenixJpCatch Kanji-VI', true]]);
     expect(names.main).toBe('FenixJpCatch JA-VI');
+    expect(general.showGuide).toBe(false);
 
     // Lookup works against the imported data, including deinflection of a conjugated form.
     const search = await context.newPage();

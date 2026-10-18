@@ -1,10 +1,10 @@
 # Dictionary release convention
 
-FenixJpCatch installs two dictionaries on first run by downloading them from the **latest GitHub Release of this repository** (`quyen-eas/fenixjpcatch-extension`). The private platform repository (`fenixjpcatch-platform`) builds the archives and must follow this convention exactly. The extension side lives in `ext/js/fenix/dictionary-release.js`; a unit test keeps this document and that file in sync.
+FenixJpCatch installs two dictionaries on first run by downloading them from the **`dict-latest` rolling GitHub Release of this repository** (`quyen-eas/fenixjpcatch-extension`). The dictionary build pipeline builds the archives and follows this convention exactly. The extension side lives in `ext/js/fenix/dictionary-release.js`; a unit test keeps this document and that file in sync.
 
 ## Assets
 
-Every Release that can be "latest" must carry **all four** assets, with these exact names:
+Every dictionary release carries **all four** assets, with these exact names:
 
 | Asset                              | Content                                       | Dictionary title (`index.json`) |
 | ---------------------------------- | --------------------------------------------- | ------------------------------- |
@@ -13,18 +13,19 @@ Every Release that can be "latest" must carry **all four** assets, with these ex
 | `fenixjpcatch-kanji-vi.zip`        | Kanji dictionary (Yomitan format 3 archive)   | `FenixJpCatch Kanji-VI`         |
 | `fenixjpcatch-kanji-vi.index.json` | Copy of the `index.json` inside the zip above |                                 |
 
-Download URLs (stable, they always redirect to the newest Release):
+Download URLs (stable, points to the latest rolling release tag `dict-latest`):
 
-- `https://github.com/quyen-eas/fenixjpcatch-extension/releases/latest/download/fenixjpcatch-ja-vi.zip`
-- `https://github.com/quyen-eas/fenixjpcatch-extension/releases/latest/download/fenixjpcatch-ja-vi.index.json`
-- `https://github.com/quyen-eas/fenixjpcatch-extension/releases/latest/download/fenixjpcatch-kanji-vi.zip`
-- `https://github.com/quyen-eas/fenixjpcatch-extension/releases/latest/download/fenixjpcatch-kanji-vi.index.json`
+- `https://github.com/quyen-eas/fenixjpcatch-extension/releases/download/dict-latest/fenixjpcatch-ja-vi.zip`
+- `https://github.com/quyen-eas/fenixjpcatch-extension/releases/download/dict-latest/fenixjpcatch-ja-vi.index.json`
+- `https://github.com/quyen-eas/fenixjpcatch-extension/releases/download/dict-latest/fenixjpcatch-kanji-vi.zip`
+- `https://github.com/quyen-eas/fenixjpcatch-extension/releases/download/dict-latest/fenixjpcatch-kanji-vi.index.json`
 
 Rules:
 
-- GitHub resolves `latest` to the most recent **published, non-draft, non-prerelease** Release of the repository, whatever it contains. If extension releases and dictionary releases are ever separate, only one of them may be "latest" and it would then lack the other's assets; therefore either every Release carries all four assets, or extension-only Releases are marked pre-release.
+- Dictionaries are published to a fixed rolling release tag named `dict-latest` (updated with every new dictionary build) and permanently tagged with versioned history tags `dict-<revision>` (e.g. `dict-2026.10.18.1`).
+- We do **not** use GitHub's generic `releases/latest`, ensuring extension releases and dictionary releases remain completely independent and do not overwrite each other.
 - The repository must be **public** for anonymous clients to download release assets (a private repository answers 404).
-- Asset names are lowercase and never versioned; the version lives in `revision`.
+- Asset names are lowercase and never versioned in their file name; the version lives in `revision`.
 
 ## `index.json` of each archive
 

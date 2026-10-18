@@ -52,8 +52,8 @@ describe('t()', () => {
 
 describe('message table', () => {
     test('every key used in the pages exists', () => {
-        const pages = getFenixPages();
-        expect(pages.length).toBeGreaterThanOrEqual(2);
+        const pages = [...getFenixPages(), 'action-popup.html'];
+        expect(pages.length).toBeGreaterThanOrEqual(3);
         for (const page of pages) {
             const html = read(page);
             for (const [, key] of html.matchAll(/data-i18n(?:-[a-z-]+)?="([^"]+)"/g)) {

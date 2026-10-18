@@ -30,13 +30,13 @@ import {
 const root = join(fileURLToPath(new URL('.', import.meta.url)), '../..');
 
 describe('Dictionary release convention', () => {
-    test('URLs point at the latest release of this repository', () => {
+    test('URLs point at the rolling dict-latest release of this repository', () => {
         expect(RELEASE_REPOSITORY).toBe('quyen-eas/fenixjpcatch-extension');
-        expect(RELEASE_DOWNLOAD_BASE_URL).toBe('https://github.com/quyen-eas/fenixjpcatch-extension/releases/latest/download');
+        expect(RELEASE_DOWNLOAD_BASE_URL).toBe('https://github.com/quyen-eas/fenixjpcatch-extension/releases/download/dict-latest');
         const [term, kanji] = FENIX_DICTIONARIES;
-        expect(getDictionaryDownloadUrl(term)).toBe('https://github.com/quyen-eas/fenixjpcatch-extension/releases/latest/download/fenixjpcatch-ja-vi.zip');
-        expect(getDictionaryDownloadUrl(kanji)).toBe('https://github.com/quyen-eas/fenixjpcatch-extension/releases/latest/download/fenixjpcatch-kanji-vi.zip');
-        expect(getDictionaryIndexUrl(term)).toBe('https://github.com/quyen-eas/fenixjpcatch-extension/releases/latest/download/fenixjpcatch-ja-vi.index.json');
+        expect(getDictionaryDownloadUrl(term)).toBe('https://github.com/quyen-eas/fenixjpcatch-extension/releases/download/dict-latest/fenixjpcatch-ja-vi.zip');
+        expect(getDictionaryDownloadUrl(kanji)).toBe('https://github.com/quyen-eas/fenixjpcatch-extension/releases/download/dict-latest/fenixjpcatch-kanji-vi.zip');
+        expect(getDictionaryIndexUrl(term)).toBe('https://github.com/quyen-eas/fenixjpcatch-extension/releases/download/dict-latest/fenixjpcatch-ja-vi.index.json');
     });
 
     test('term dictionary has the highest priority and the documented title', () => {
