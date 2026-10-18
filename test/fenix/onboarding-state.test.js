@@ -27,8 +27,9 @@ describe('normalizeState', () => {
     });
 
     test('keeps only well-formed entries', () => {
-        expect(normalizeState({dictionaries: {a: true, b: false, c: 'yes'}, audioFallbackApplied: 'true'})).toStrictEqual({dictionaries: {a: true}, audioFallbackApplied: false});
-        expect(normalizeState({dictionaries: {a: true}, audioFallbackApplied: true})).toStrictEqual({dictionaries: {a: true}, audioFallbackApplied: true});
+        expect(normalizeState({dictionaries: {a: true, b: false, c: 'yes'}, audioFallbackApplied: 'true'})).toStrictEqual({dictionaries: {a: true}, importing: {}, audioFallbackApplied: false});
+        expect(normalizeState({dictionaries: {a: true}, audioFallbackApplied: true})).toStrictEqual({dictionaries: {a: true}, importing: {}, audioFallbackApplied: true});
+        expect(normalizeState({importing: {a: true, b: false, c: 1}}).importing).toStrictEqual({a: true});
     });
 });
 
@@ -38,6 +39,6 @@ describe('OnboardingStateStore', () => {
         expect(await store.load()).toStrictEqual(createEmptyState());
         await store.update((state) => { state.dictionaries['ja-vi'] = true; });
         await store.update((state) => { state.audioFallbackApplied = true; });
-        expect(await store.load()).toStrictEqual({dictionaries: {'ja-vi': true}, audioFallbackApplied: true});
+        expect(await store.load()).toStrictEqual({dictionaries: {'ja-vi': true}, importing: {}, audioFallbackApplied: true});
     });
 });

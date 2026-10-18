@@ -33,12 +33,15 @@ const STORAGE_KEY = 'fenixOnboarding';
 /**
  * @typedef {object} OnboardingState
  * @property {Record<string, boolean>} dictionaries Dictionary id → installed by the first-run setup.
+ * @property {Record<string, boolean>} importing Dictionary id → an import started by the first-run setup has not finished.
+ *   Only a dictionary marked here may be deleted as an abandoned partial import; one without the mark belongs to
+ *   somebody else (e.g. an import running from the settings page) and is left alone.
  * @property {boolean} audioFallbackApplied The text-to-speech fallback has been added.
  */
 
 /** @returns {OnboardingState} */
 export function createEmptyState() {
-    return {dictionaries: {}, audioFallbackApplied: false};
+    return {dictionaries: {}, importing: {}, audioFallbackApplied: false};
 }
 
 /**
@@ -48,10 +51,15 @@ export function createEmptyState() {
 export function normalizeState(value) {
     const state = createEmptyState();
     if (typeof value !== 'object' || value === null) { return state; }
-    const {dictionaries, audioFallbackApplied} = /** @type {Record<string, unknown>} */ (value);
+    const {dictionaries, importing, audioFallbackApplied} = /** @type {Record<string, unknown>} */ (value);
     if (typeof dictionaries === 'object' && dictionaries !== null) {
         for (const [id, done] of Object.entries(dictionaries)) {
             if (done === true) { state.dictionaries[id] = true; }
+        }
+    }
+    if (typeof importing === 'object' && importing !== null) {
+        for (const [id, active] of Object.entries(importing)) {
+            if (active === true) { state.importing[id] = true; }
         }
     }
     state.audioFallbackApplied = audioFallbackApplied === true;

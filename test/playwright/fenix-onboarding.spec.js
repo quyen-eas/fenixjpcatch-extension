@@ -105,7 +105,8 @@ test('first run installs the bundled dictionaries and they can be looked up', as
 
     // The original Yomitan setup page is still available, and so is the About page.
     await welcome.goto(`chrome-extension://${extensionId}/welcome.html`);
-    await expect(welcome.locator('h1')).toHaveText('Welcome to Yomitan!');
+    // welcome.html has several <h1> (its modal titles appear once its scripts have run), so match by name, not by tag.
+    await expect(welcome.getByRole('heading', {level: 1, name: 'Welcome to Yomitan!'})).toBeVisible();
     await welcome.goto(`chrome-extension://${extensionId}/fenix-about.html`);
     await expect(welcome.locator('h1')).toHaveText('FenixJpCatch');
     await expect(welcome.locator('body')).toContainText('Based on Yomitan');

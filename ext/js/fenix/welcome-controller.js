@@ -18,8 +18,8 @@
 import {log} from '../core/log.js';
 import {querySelectorNotNull} from '../dom/query-selector.js';
 import {FENIX_DICTIONARIES} from './dictionary-release.js';
+import {applyAudioFallback} from './audio-fallback.js';
 import {applyTranslations, t} from './i18n.js';
-import {buildAudioFallbackModifications, needsAudioFallback, pickJapaneseVoice} from './onboarding-settings.js';
 
 /** Number of steps reported by the dictionary importer (see ImportProgressTracker in dictionary-import-controller.js). */
 const IMPORT_STEP_COUNT = 6;
@@ -34,15 +34,18 @@ export class WelcomeController {
      * @param {import('./dictionary-installer.js').FenixDictionaryInstaller} details.installer
      * @param {import('./onboarding-state.js').OnboardingStateStore} details.state
      * @param {import('../pages/settings/settings-controller.js').SettingsController} details.settingsController
+     * @param {(targets: import('settings-modifications').Modification[]) => Promise<Error[]>} details.modifyGlobalSettings Resolves with the errors of failed modifications.
      * @param {() => Promise<import('./onboarding-settings.js').SpeechVoiceInfo[]>} details.getVoices
      */
-    constructor({installer, state, settingsController, getVoices}) {
+    constructor({installer, state, settingsController, modifyGlobalSettings, getVoices}) {
         /** @type {import('./dictionary-installer.js').FenixDictionaryInstaller} */
         this._installer = installer;
         /** @type {import('./onboarding-state.js').OnboardingStateStore} */
         this._state = state;
         /** @type {import('../pages/settings/settings-controller.js').SettingsController} */
         this._settingsController = settingsController;
+        /** @type {(targets: import('settings-modifications').Modification[]) => Promise<Error[]>} */
+        this._modifyGlobalSettings = modifyGlobalSettings;
         /** @type {() => Promise<import('./onboarding-settings.js').SpeechVoiceInfo[]>} */
         this._getVoices = getVoices;
         /** @type {HTMLElement} */
@@ -219,24 +222,21 @@ export class WelcomeController {
      */
     async _applyAudioFallback() {
         try {
-            const optionsFull = await this._settingsController.getOptionsFull();
-            const state = await this._state.load();
-            if (!needsAudioFallback(optionsFull)) {
-                if (state.audioFallbackApplied) { this._showAudioNote('audio.fallbackPresent'); }
-                return;
-            }
-            if (state.audioFallbackApplied) { return; } // The user removed it on purpose.
-
-            const voiceUri = pickJapaneseVoice(await this._getVoices());
-            if (voiceUri === null) {
-                this._showAudioNote('audio.noJapaneseVoice');
-                return;
-            }
-            const targets = buildAudioFallbackModifications(optionsFull, voiceUri);
-            if (targets.length === 0) { return; }
-            await this._settingsController.modifyGlobalSettings(targets);
-            await this._state.update((s) => { s.audioFallbackApplied = true; });
-            this._showAudioNote('audio.fallbackAdded');
+            const status = await applyAudioFallback({
+                getOptionsFull: () => this._settingsController.getOptionsFull(),
+                modifyGlobalSettings: this._modifyGlobalSettings,
+                state: this._state,
+                getVoices: this._getVoices,
+            });
+            /** @type {Partial<Record<import('./audio-fallback.js').AudioFallbackStatus, string>>} */
+            const notes = {
+                'applied': 'audio.fallbackAdded',
+                'present': 'audio.fallbackPresent',
+                'no-voice': 'audio.noJapaneseVoice',
+                'failed': 'audio.fallbackFailed',
+            };
+            const key = notes[status];
+            if (typeof key !== 'undefined') { this._showAudioNote(key); }
         } catch (e) {
             // Audio defaults are a convenience; never let them break the welcome page.
             log.warn(e);

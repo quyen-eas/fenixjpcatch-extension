@@ -41,7 +41,7 @@ Upstream release/publishing automation that depends on upstream's store accounts
 
 - `CLAUDE.md`, `ATTRIBUTION.md`, `CHANGES.md`, `docs/upstream-sync.md`
 - Phase 2 (onboarding):
-  - `ext/js/fenix/` — first-run dictionary installer, Vietnamese welcome and About pages, small i18n layer (`dictionary-release.js`, `dictionary-downloader.js`, `dictionary-installer.js`, `onboarding-settings.js`, `onboarding-state.js`, `i18n.js`, `messages-vi.js`, `welcome-*.js`, `about-main.js`)
+  - `ext/js/fenix/` — first-run dictionary installer, Vietnamese welcome and About pages, small i18n layer (`dictionary-release.js`, `dictionary-downloader.js`, `dictionary-installer.js`, `archive-index.js`, `audio-fallback.js`, `onboarding-settings.js`, `onboarding-state.js`, `i18n.js`, `messages-vi.js`, `welcome-*.js`, `about-main.js`)
   - `ext/fenix-welcome.html`, `ext/fenix-about.html`, `ext/css/fenix.css`
   - `docs/dictionary-release.md` — naming convention of the dictionary Release assets
   - `test/fenix/` (unit tests and fixture dictionaries), `test/playwright/fenix-onboarding.spec.js`
