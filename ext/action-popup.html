@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Yomitan Action Popup</title>
+    <title>FenixJpCatch</title>
     <link rel="icon" type="image/png" href="/images/icon16.png" sizes="16x16">
     <link rel="icon" type="image/png" href="/images/icon19.png" sizes="19x19">
     <link rel="icon" type="image/png" href="/images/icon32.png" sizes="32x32">
@@ -13,6 +13,7 @@
     <link rel="icon" type="image/png" href="/images/icon128.png" sizes="128x128">
     <link rel="stylesheet" type="text/css" href="/css/material.css">
     <link rel="stylesheet" type="text/css" href="/css/action-popup.css">
+    <link rel="stylesheet" type="text/css" href="/css/fenix-theme.css">
     <script src="/js/pages/action-popup-main.js" type="module"></script>
 </head>
 <body>
@@ -20,70 +21,91 @@
         Loading...
     </div>
     <div id="action-popup">
-        <div class="action-container action-select-profile" hidden>
-            <div class="action-item-left">
-                <h2 class="action-title">Profile</h2>
+        <header class="fenix-action-header">
+            <div class="fenix-brand">
+                <span class="fenix-brand-title">FenixJpCatch</span>
+                <span class="fenix-brand-subtitle">Từ điển Nhật - Việt Thông Minh</span>
             </div>
-            <div class="action-item-right">
-                <select tabindex="0"  class="profile-select" id="profile-select">
-                </select>
-            </div>
-        </div>
-        <div class="action-container">
-            <div class="action-item-center">
-                <label class="toggle">
+            <div class="fenix-toggle-wrap">
+                <label class="toggle" title="Bật / Tắt tra từ">
                     <input tabindex="0" type="checkbox" class="enable-search">
                     <div class="toggle-group">
-                        <span class="toggle-on">On</span>
-                        <span class="toggle-off">Off</span>
+                        <span class="toggle-on">BẬT</span>
+                        <span class="toggle-off">TẮT</span>
                         <span class="toggle-handle"></span>
                     </div>
                 </label>
-                <p class="tooltip">Hover over text to scan</p>
+            </div>
+        </header>
+
+        <div class="fenix-hint-card">
+            <span class="icon fenix-hint-icon" data-icon="magnifying-glass"></span>
+            <p class="tooltip">Rê chuột để tra từ</p>
+        </div>
+
+        <div class="action-container action-select-profile" hidden>
+            <div class="action-item-left">
+                <span class="action-title">Hồ sơ từ điển</span>
+            </div>
+            <div class="action-item-right">
+                <select tabindex="0" class="profile-select" id="profile-select">
+                </select>
             </div>
         </div>
-        <div class="action-container action-buttons">
-            <button tabindex="0" type="button" class="low-emphasis action-open-settings" title="Settings" data-hotkey='["global:openSettingsPage","title","Settings ({0})"]'>
-                <div class="action-icon">
-                    <span class="icon" data-icon="cog"></span>
+
+        <div class="fenix-offline-status">
+            <div class="fenix-offline-badge">
+                <span class="fenix-status-dot"></span>
+                <span>Từ điển ngoại tuyến</span>
+            </div>
+            <span class="fenix-offline-count">180,000+ từ &amp; ví dụ đối soát</span>
+        </div>
+
+        <div class="fenix-grid-nav">
+            <a href="/fenix-welcome.html" target="_blank" rel="noopener" class="fenix-grid-card action-open-fenix-welcome">
+                <div class="fenix-grid-icon-wrap">
+                    <span class="icon" data-icon="material-right-arrow"></span>
                 </div>
-            </button>
-            <button tabindex="0" type="button" class="low-emphasis action-open-search" title="Search&#010;Shift+click to open here" data-hotkey='["global:openSearchPage","title","Search ({0})\nShift+click to open here"]'>
-                <div class="action-icon">
+                <div class="fenix-grid-text">
+                    <span class="fenix-grid-label" data-i18n="popup.fenix.welcome">Hướng dẫn</span>
+                    <span class="fenix-grid-desc">Cách dùng &amp; mẹo</span>
+                </div>
+            </a>
+            <button type="button" class="fenix-grid-card low-emphasis action-open-search" data-hotkey='["global:openSearchPage","title","Tra cứu ({0})\nShift+click để mở tại đây"]'>
+                <div class="fenix-grid-icon-wrap">
                     <span class="icon" data-icon="magnifying-glass"></span>
                 </div>
-            </button>
-            <button tabindex="0" type="button" class="low-emphasis action-open-info" title="Information" data-hotkey='["global:openInfoPage","title","Information ({0})"]'>
-                <div class="action-icon">
-                    <span class="icon" data-icon="question-mark-circle"></span>
+                <div class="fenix-grid-text">
+                    <span class="fenix-grid-label">Tra cứu</span>
+                    <span class="fenix-grid-desc">Tìm từ &amp; Kanji</span>
                 </div>
             </button>
-        </div>
-        <!-- Modified by Fenix Labs for FenixJpCatch (Phase 2.1): added Fenix section -->
-        <div class="fenix-popup-divider"></div>
-        <div class="action-container fenix-popup-section">
-            <div class="fenix-popup-title" data-i18n="popup.fenix.title">FenixJpCatch</div>
-            <div class="fenix-popup-buttons">
-                <a href="/fenix-welcome.html" target="_blank" rel="noopener" class="fenix-popup-btn action-open-fenix-welcome" data-i18n-title="popup.fenix.welcome">
-                    <span class="icon" data-icon="material-right-arrow"></span>
-                    <span data-i18n="popup.fenix.welcome">Hướng dẫn</span>
-                </a>
-                <a href="/fenix-about.html" target="_blank" rel="noopener" class="fenix-popup-btn action-open-fenix-about" data-i18n-title="popup.fenix.about">
+            <button type="button" class="fenix-grid-card low-emphasis action-open-settings" data-hotkey='["global:openSettingsPage","title","Cài đặt ({0})"]'>
+                <div class="fenix-grid-icon-wrap">
+                    <span class="icon" data-icon="cog"></span>
+                </div>
+                <div class="fenix-grid-text">
+                    <span class="fenix-grid-label">Cài đặt</span>
+                    <span class="fenix-grid-desc">Phím tắt, Anki</span>
+                </div>
+            </button>
+            <a href="/fenix-about.html" target="_blank" rel="noopener" class="fenix-grid-card action-open-fenix-about">
+                <div class="fenix-grid-icon-wrap">
                     <span class="icon" data-icon="question-mark-circle"></span>
-                    <span data-i18n="popup.fenix.about">Giới thiệu</span>
-                </a>
-            </div>
-            <div class="fenix-popup-buttons fenix-popup-sub">
-                <button type="button" class="fenix-popup-btn fenix-btn-disabled" disabled data-i18n-title="popup.fenix.savedWordsSoon">
-                    <span class="icon" data-icon="note-card"></span>
-                    <span data-i18n="popup.fenix.savedWords">Từ đã lưu</span>
-                </button>
-                <button type="button" class="fenix-popup-btn fenix-btn-disabled" disabled data-i18n-title="popup.fenix.loginSoon">
-                    <span class="icon" data-icon="profile"></span>
-                    <span data-i18n="popup.fenix.login">Đăng nhập</span>
-                </button>
-            </div>
+                </div>
+                <div class="fenix-grid-text">
+                    <span class="fenix-grid-label" data-i18n="popup.fenix.about">Giới thiệu</span>
+                    <span class="fenix-grid-desc">Mã nguồn &amp; bản quyền</span>
+                </div>
+            </a>
         </div>
+
+        <footer class="fenix-action-footer">
+            <span id="extension-info">FenixJpCatch</span>
+            <button tabindex="0" type="button" class="low-emphasis action-open-info fenix-mini-link" title="Information" data-hotkey='["global:openInfoPage","title","Information ({0})"]'>
+                <span class="icon" data-icon="question-mark-circle"></span>
+            </button>
+        </footer>
     </div>
 </body>
 </html>
