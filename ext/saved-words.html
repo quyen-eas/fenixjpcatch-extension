@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<!-- Added by FenixJpCatch (Phase 3). Saved Words & Cloud Sync Dashboard. -->
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Sổ từ đã lưu - FenixJpCatch</title>
+    <link rel="icon" type="image/png" href="/images/icon16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="/images/icon19.png" sizes="19x19">
+    <link rel="icon" type="image/png" href="/images/icon32.png" sizes="32x32">
+    <link rel="icon" type="image/png" href="/images/icon38.png" sizes="38x38">
+    <link rel="icon" type="image/png" href="/images/icon48.png" sizes="48x48">
+    <link rel="icon" type="image/png" href="/images/icon64.png" sizes="64x64">
+    <link rel="icon" type="image/png" href="/images/icon128.png" sizes="128x128">
+    <link rel="stylesheet" type="text/css" href="/css/material.css">
+    <link rel="stylesheet" type="text/css" href="/css/fenix-theme.css">
+    <link rel="stylesheet" type="text/css" href="/css/saved-words.css">
+    <script src="/js/pages/saved-words-main.js" type="module"></script>
+</head>
+<body>
+    <aside class="sw-sidebar">
+        <div class="sw-brand">
+            <div class="sw-brand-icon">
+                <span class="icon" data-icon="star"></span>
+            </div>
+            <div>
+                <div class="sw-brand-title">FenixJpCatch</div>
+                <div class="sw-brand-subtitle">Bộ điều khiển trung tâm</div>
+            </div>
+        </div>
+
+        <div class="sw-nav-section-title">Mục điều hướng</div>
+        <nav class="sw-nav-list">
+            <a href="/saved-words.html" class="sw-nav-item active">
+                <span class="icon" data-icon="star"></span>
+                <span>Từ đã lưu</span>
+            </a>
+            <a href="/fenix-welcome.html" class="sw-nav-item">
+                <span class="icon" data-icon="material-right-arrow"></span>
+                <span>Tra từ Hover</span>
+            </a>
+            <a href="/search.html" class="sw-nav-item">
+                <span class="icon" data-icon="magnifying-glass"></span>
+                <span>Tìm kiếm</span>
+            </a>
+            <a href="/settings.html" class="sw-nav-item">
+                <span class="icon" data-icon="cog"></span>
+                <span>Cài đặt</span>
+            </a>
+            <a href="/fenix-about.html" class="sw-nav-item">
+                <span class="icon" data-icon="question-mark-circle"></span>
+                <span>Giới thiệu</span>
+            </a>
+        </nav>
+
+        <div class="sw-sidebar-bottom">
+            <div class="sw-offline-pill">
+                <span class="icon" data-icon="book"></span>
+                <div>
+                    <div>JLPT Kho N5 - N1</div>
+                    <div style="color: var(--sw-text-muted);">180,000+ từ ngoại tuyến</div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <div class="sw-main-wrap">
+        <header class="sw-top-header">
+            <div class="sw-header-left">
+                <div class="sw-status-badge">
+                    <span class="sw-status-dot"></span>
+                    <span>Bật tra từ tự động</span>
+                </div>
+            </div>
+            <div class="sw-header-right">
+                <div class="sw-sync-indicator" id="sw-sync-btn" title="Bấm để đồng bộ đám mây ngay bây giờ">
+                    <span class="icon" data-icon="connection"></span>
+                    <span id="sw-sync-text">Đã đồng bộ</span>
+                </div>
+                <div id="sw-auth-container">
+                    <button type="button" class="sw-auth-btn" id="sw-login-btn">Đăng nhập Google</button>
+                </div>
+            </div>
+        </header>
+
+        <main class="sw-content-grid">
+            <!-- Left panel: Metrics & Controls -->
+            <section class="sw-left-panel">
+                <div class="sw-card">
+                    <div class="sw-card-title">Học viên &amp; Tiến độ</div>
+                    <div id="sw-user-summary">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div class="sw-avatar" id="sw-avatar-display">F</div>
+                            <div>
+                                <div style="font-weight: 600;" id="sw-username-display">Học viên Fenix</div>
+                                <div style="font-size: 0.75em; color: var(--sw-text-muted);" id="sw-user-status">Đang học JLPT</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="sw-metrics-grid">
+                        <div class="sw-metric-box">
+                            <span class="sw-metric-val" id="sw-stat-total">0</span>
+                            <span class="sw-metric-label">Từ đã lưu</span>
+                        </div>
+                        <div class="sw-metric-box">
+                            <span class="sw-metric-val" id="sw-stat-streak">1</span>
+                            <span class="sw-metric-label">Chuỗi ngày</span>
+                        </div>
+                        <div class="sw-metric-box">
+                            <span class="sw-metric-val" id="sw-stat-mastered">0</span>
+                            <span class="sw-metric-label">Đã thuộc</span>
+                        </div>
+                    </div>
+
+                    <div class="sw-progress-wrap">
+                        <div class="sw-progress-label-row">
+                            <span>Tỷ lệ ghi nhớ mục tiêu</span>
+                            <span id="sw-stat-ratio">0%</span>
+                        </div>
+                        <div class="sw-progress-track">
+                            <div class="sw-progress-bar" id="sw-stat-bar" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sw-card">
+                    <div class="sw-card-title">Hành động nhanh</div>
+                    <button type="button" class="sw-action-btn-primary" id="sw-btn-quiz">
+                        <span class="icon" data-icon="note-card" style="width: 16px; height: 16px; background-color: #3a0526;"></span>
+                        <span>Bắt đầu Flashcard Quiz</span>
+                    </button>
+                    <div class="sw-action-row">
+                        <button type="button" class="sw-action-btn-sec" id="sw-btn-export-anki">Xuất Anki (.txt)</button>
+                        <button type="button" class="sw-action-btn-sec" id="sw-btn-export-csv">Xuất CSV</button>
+                    </div>
+                </div>
+
+                <div class="sw-card">
+                    <div class="sw-card-title">Nhãn danh mục</div>
+                    <div style="display: flex; flex-direction: column; gap: 6px; font-size: 0.82em;">
+                        <div style="display: flex; justify-content: space-between; padding: 6px 8px; border-radius: 6px; background: var(--sw-card-low);">
+                            <span style="color: var(--sw-peach-dim);">#N3_Vocabulary</span>
+                            <span style="color: var(--sw-text-muted);">Từ điển JA-VI</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 6px 8px; border-radius: 6px; background: var(--sw-card-low);">
+                            <span style="color: var(--sw-pink);">#Công_Sở</span>
+                            <span style="color: var(--sw-text-muted);">Giao tiếp</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 6px 8px; border-radius: 6px; background: var(--sw-card-low);">
+                            <span style="color: var(--sw-peach);">#Tin_Tức</span>
+                            <span style="color: var(--sw-text-muted);">Báo chí web</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right panel: Search, Filters & Word Cards -->
+            <section class="sw-stream-panel">
+                <div class="sw-search-bar">
+                    <span class="icon sw-search-icon" data-icon="magnifying-glass"></span>
+                    <input type="text" class="sw-search-input" id="sw-search-input" placeholder="Tìm kiếm từ vựng, Kanji, Hán Việt hoặc câu ngữ cảnh...">
+                </div>
+
+                <div class="sw-filter-chips">
+                    <button type="button" class="sw-chip active" data-filter="all">Tất cả</button>
+                    <button type="button" class="sw-chip" data-filter="has-context">Có câu ngữ cảnh</button>
+                    <button type="button" class="sw-chip" data-filter="new">Mới lưu</button>
+                    <button type="button" class="sw-chip" data-filter="checked">Đã thuộc</button>
+                </div>
+
+                <div class="sw-words-list" id="sw-words-container">
+                    <!-- Cards will be dynamically inserted here -->
+                </div>
+
+                <div class="sw-empty-state" id="sw-empty-state" hidden>
+                    <div class="sw-empty-icon">
+                        <span class="icon" data-icon="star"></span>
+                    </div>
+                    <div class="sw-empty-text">
+                        Chưa có từ nào trong sổ từ. Khi duyệt web, rê chuột vào từ tiếng Nhật và bấm nút <strong>☆ Ngôi sao</strong> để lưu lại từ vựng kèm ngữ cảnh câu thực tế!
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+</body>
+</html>
