@@ -20,6 +20,7 @@
     --fenix-primary-plum: #502d55;
     --fenix-secondary-mauve: #713455;
     --fenix-accent-pink: #ffafd5;
+    --fenix-accent-peach: #f8af8e;
     --fenix-peach-highlight: #f6dbc0;
     --fenix-peach-dim: #dcc2a8;
     --fenix-peach-container: #483724;
@@ -217,15 +218,16 @@
 
 /* Action Buttons (Audio, Bookmark, Kebab) */
 :root[data-theme=dark] .action-button {
-    background-color: var(--fenix-card-surface);
+    background-color: var(--fenix-card-elevated);
     border-radius: 8px;
     color: var(--fenix-peach-highlight);
-    border: 1px solid var(--fenix-hairline-border);
-    transition: background-color 0.15s ease, transform 0.1s ease;
+    border: 1px solid rgba(216, 180, 200, 0.18);
+    transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
 }
 
 :root[data-theme=dark] .action-button:hover {
     background-color: var(--fenix-primary-plum);
+    border-color: rgba(248, 175, 142, 0.35);
     color: var(--fenix-ivory-text);
 }
 
@@ -233,23 +235,56 @@
     transform: scale(0.92);
 }
 
-/* Saved word star button styling */
+/* Saved word star bookmark button styling (Unsaved ☆) */
+.action-button[data-action=save-word] {
+    background-color: rgba(248, 175, 142, 0.1);
+    border: 1px solid rgba(248, 175, 142, 0.42);
+    border-radius: 8px;
+}
+
+:root[data-theme=dark] .action-button[data-action=save-word] .action-icon,
 .action-button[data-action=save-word] .action-icon {
+    background-color: var(--fenix-accent-peach);
     transition: background-color 0.15s ease, transform 0.15s ease;
 }
 
-.action-button[data-action=save-word]:hover .action-icon {
-    background-color: var(--fenix-accent-peach);
+:root[data-theme=dark] .action-button[data-action=save-word]:hover,
+.action-button[data-action=save-word]:hover {
+    background-color: rgba(248, 175, 142, 0.22);
+    border-color: var(--fenix-accent-peach);
+    box-shadow: 0 0 10px rgba(248, 175, 142, 0.35);
+    transform: scale(1.08);
 }
 
+:root[data-theme=dark] .action-button[data-action=save-word]:hover .action-icon,
+.action-button[data-action=save-word]:hover .action-icon {
+    background-color: #ffffff;
+}
+
+/* Saved word star bookmark button styling (Saved ★) */
+:root[data-theme=dark] .action-button[data-action=save-word][data-saved=true],
 .action-button[data-action=save-word][data-saved=true] {
-    border-color: rgba(248, 175, 142, 0.4);
-    background-color: rgba(248, 175, 142, 0.12);
+    background: linear-gradient(135deg, #f8af8e 0%, #e69d7a 100%);
+    border: 1px solid #ffe2d5;
+    box-shadow: 0 0 12px rgba(248, 175, 142, 0.55), 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 :root[data-theme=dark] .action-button[data-action=save-word][data-saved=true] .action-icon,
 .action-button[data-action=save-word][data-saved=true] .action-icon {
-    background-color: var(--fenix-accent-peach);
+    background-color: #2b0b2e;
+}
+
+:root[data-theme=dark] .action-button[data-action=save-word][data-saved=true]:hover,
+.action-button[data-action=save-word][data-saved=true]:hover {
+    background: linear-gradient(135deg, #ffc4a8 0%, #f0a887 100%);
+    border-color: #ffffff;
+    box-shadow: 0 0 16px rgba(248, 175, 142, 0.75), 0 2px 6px rgba(0, 0, 0, 0.35);
+    transform: scale(1.08);
+}
+
+:root[data-theme=dark] .action-button[data-action=save-word][data-saved=true]:hover .action-icon,
+.action-button[data-action=save-word][data-saved=true]:hover .action-icon {
+    background-color: #1c0520;
 }
 
 /* Kanji breakdown entries */
@@ -355,3 +390,49 @@
     color: #502d55;
     border: 1px solid rgba(80, 45, 85, 0.2);
 }
+
+/* Light theme action & bookmark buttons */
+:root[data-theme=light] .action-button {
+    background-color: #ffffff;
+    border: 1px solid rgba(80, 45, 85, 0.16);
+    border-radius: 8px;
+    transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+}
+
+:root[data-theme=light] .action-button:hover {
+    background-color: #faede1;
+    border-color: rgba(113, 52, 85, 0.35);
+}
+
+:root[data-theme=light] .action-button[data-action=save-word] {
+    background-color: #faede1;
+    border: 1px solid rgba(147, 80, 115, 0.4);
+}
+
+:root[data-theme=light] .action-button[data-action=save-word] .action-icon {
+    background-color: #713455;
+}
+
+:root[data-theme=light] .action-button[data-action=save-word]:hover {
+    background-color: #f6dbc0;
+    border-color: #713455;
+    box-shadow: 0 0 8px rgba(113, 52, 85, 0.25);
+    transform: scale(1.08);
+}
+
+:root[data-theme=light] .action-button[data-action=save-word][data-saved=true] {
+    background: linear-gradient(135deg, #713455 0%, #502d55 100%);
+    border: 1px solid #3a0526;
+    box-shadow: 0 0 10px rgba(113, 52, 85, 0.35);
+}
+
+:root[data-theme=light] .action-button[data-action=save-word][data-saved=true] .action-icon {
+    background-color: #f8f4e9;
+}
+
+:root[data-theme=light] .action-button[data-action=save-word][data-saved=true]:hover {
+    background: linear-gradient(135deg, #853e65 0%, #613766 100%);
+    box-shadow: 0 0 14px rgba(113, 52, 85, 0.5);
+    transform: scale(1.08);
+}
+
