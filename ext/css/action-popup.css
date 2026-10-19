@@ -414,6 +414,25 @@ select.profile-select {
     border-color: rgba(246, 219, 192, 0.3);
 }
 
+.fenix-grid-card.fenix-grid-card-highlight {
+    grid-column: 1 / -1;
+    background: linear-gradient(135deg, rgba(80, 45, 85, 0.6) 0%, rgba(41, 26, 45, 0.8) 100%);
+    border-color: rgba(248, 175, 142, 0.25);
+}
+
+.fenix-grid-card.fenix-grid-card-highlight:hover {
+    border-color: rgba(248, 175, 142, 0.6);
+    background-color: #3f2f43;
+}
+
+.fenix-grid-card.fenix-grid-card-highlight .fenix-grid-icon-wrap {
+    background-color: rgba(248, 175, 142, 0.15);
+}
+
+.fenix-grid-card.fenix-grid-card-highlight .fenix-grid-icon-wrap>.icon {
+    background-color: #f8af8e;
+}
+
 .fenix-grid-icon-wrap {
     width: 28px;
     height: 28px;

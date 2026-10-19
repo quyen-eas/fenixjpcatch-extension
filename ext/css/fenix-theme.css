@@ -233,6 +233,25 @@
     transform: scale(0.92);
 }
 
+/* Saved word star button styling */
+.action-button[data-action=save-word] .action-icon {
+    transition: background-color 0.15s ease, transform 0.15s ease;
+}
+
+.action-button[data-action=save-word]:hover .action-icon {
+    background-color: var(--fenix-accent-peach);
+}
+
+.action-button[data-action=save-word][data-saved=true] {
+    border-color: rgba(248, 175, 142, 0.4);
+    background-color: rgba(248, 175, 142, 0.12);
+}
+
+:root[data-theme=dark] .action-button[data-action=save-word][data-saved=true] .action-icon,
+.action-button[data-action=save-word][data-saved=true] .action-icon {
+    background-color: var(--fenix-accent-peach);
+}
+
 /* Kanji breakdown entries */
 :root[data-theme=dark] .kanji-entry {
     background-color: var(--fenix-card-bg);
