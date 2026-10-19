@@ -1,0 +1,338 @@
+/*
+ * FenixJpCatch Theme: Violet Dusk
+ * Color tokens:
+ *   --surface: #1c0e20
+ *   --surface-container: #251629 / #291a2d / #342538
+ *   --primary: #e6b7e8
+ *   --primary-container: #502d55
+ *   --secondary: #ffafd5
+ *   --secondary-container: #713455
+ *   --tertiary (Peach): #f6dbc0
+ *   --on-surface: #f3dbf5 / #f8f4e9
+ */
+
+:root {
+    --fenix-bg-night: #1c0e20;
+    --fenix-bg-canvas-deep: #16091b;
+    --fenix-card-bg: #251629;
+    --fenix-card-surface: #291a2d;
+    --fenix-card-elevated: #342538;
+    --fenix-primary-plum: #502d55;
+    --fenix-secondary-mauve: #713455;
+    --fenix-accent-pink: #ffafd5;
+    --fenix-peach-highlight: #f6dbc0;
+    --fenix-peach-dim: #dcc2a8;
+    --fenix-peach-container: #483724;
+    --fenix-ivory-text: #f8f4e9;
+    --fenix-plum-text: #f3dbf5;
+    --fenix-muted-text: #d0c3cc;
+    --fenix-hairline-border: rgba(216, 180, 200, 0.14);
+    --fenix-peach-border: rgba(246, 219, 192, 0.3);
+}
+
+/* ==========================================================================
+   Dark Theme (Violet Dusk) - Popup and Search Pages
+   ========================================================================== */
+
+:root[data-theme=dark] {
+    --background-color: var(--fenix-bg-night);
+    --text-color: var(--fenix-plum-text);
+    --accent-color: var(--fenix-peach-highlight);
+    --accent-color-dark: var(--fenix-peach-dim);
+    --accent-color-light: #ffd6ff;
+
+    --headword-text-color: var(--fenix-ivory-text);
+    --headword-text-color-popular: var(--fenix-peach-highlight);
+    --headword-furigana-text-color: #e6b7e8;
+    --headword-reading-text-color: var(--fenix-peach-highlight);
+
+    --light-border-color: rgba(216, 180, 200, 0.1);
+    --medium-border-color: var(--fenix-hairline-border);
+    --dark-border-color: #5e3a62;
+
+    --sidebar-background-color: var(--fenix-bg-canvas-deep);
+    --sidebar-button-icon-color: var(--fenix-peach-dim);
+    --sidebar-button-background-color: transparent;
+    --sidebar-button-background-color-hover: var(--fenix-card-elevated);
+    --sidebar-button-background-color-active: var(--fenix-primary-plum);
+
+    --background-color-light: var(--fenix-card-bg);
+    --background-color-dark1: var(--fenix-card-elevated);
+    --input-background-color: var(--fenix-card-surface);
+    --input-background-color-dark: var(--fenix-card-elevated);
+    --input-background-color-darker: var(--fenix-primary-plum);
+
+    --action-button-hover-color: var(--fenix-primary-plum);
+    --action-button-active-color: var(--fenix-secondary-mauve);
+
+    --scrollbar-thumb-color: var(--fenix-primary-plum);
+    --scrollbar-track-color: var(--fenix-bg-canvas-deep);
+}
+
+/* Settings and page layout styling */
+:root[data-theme=dark] .settings-group {
+    background-color: var(--fenix-card-bg);
+    border: 1px solid var(--fenix-hairline-border);
+    border-radius: 12px;
+}
+
+:root[data-theme=dark] .sidebar,
+:root[data-theme=dark] .sidebar-inner {
+    background-color: var(--fenix-bg-canvas-deep);
+}
+
+:root[data-theme=dark] .outline-item:hover {
+    background-color: var(--fenix-card-elevated);
+    color: var(--fenix-ivory-text);
+}
+
+:root[data-theme=dark] .search-textbox,
+:root[data-theme=dark] input[type=text],
+:root[data-theme=dark] select {
+    background-color: var(--fenix-card-surface);
+    color: var(--fenix-ivory-text);
+    border: 1px solid var(--fenix-hairline-border);
+    border-radius: 8px;
+}
+
+/* Entry card container styling */
+:root[data-theme=dark] .entry {
+    background-color: var(--fenix-card-bg);
+    border: 1px solid var(--fenix-hairline-border);
+    border-radius: 12px;
+    margin-bottom: 0.85em;
+    padding: 0.85em 1em;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
+    transition: border-color 0.2s ease;
+}
+
+:root[data-theme=dark] .entry:hover {
+    border-color: rgba(246, 219, 192, 0.28);
+}
+
+:root[data-theme=dark] .entry-header {
+    border-bottom: 1px solid var(--fenix-hairline-border);
+    padding-bottom: 0.5em;
+    margin-bottom: 0.5em;
+}
+
+/* Headword & Furigana */
+:root[data-theme=dark] .headword-term {
+    color: var(--fenix-ivory-text);
+    font-weight: bold;
+    letter-spacing: -0.01em;
+}
+
+:root[data-theme=dark] .headword-reading {
+    color: var(--fenix-peach-highlight);
+    font-weight: normal;
+}
+
+:root[data-theme=dark] ruby>rt {
+    color: var(--fenix-peach-dim);
+    font-size: 0.65em;
+}
+
+/* Sino-Vietnamese (Hán Việt) Highlights */
+:root[data-theme=dark] [data-sc-content=han-viet],
+:root[data-theme=dark] .fenix-han-viet,
+:root[data-theme=dark] .tag[data-category=han-viet] {
+    background-color: var(--fenix-peach-container);
+    color: var(--fenix-peach-highlight);
+    border: 1px solid var(--fenix-peach-border);
+    border-radius: 6px;
+    font-weight: bold;
+    padding: 0.15em 0.55em;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    display: inline-block;
+}
+
+/* Sense tags & grammar badges */
+:root[data-theme=dark] .tag {
+    background-color: var(--fenix-primary-plum);
+    color: var(--fenix-ivory-text);
+    border: 1px solid rgba(147, 80, 115, 0.35);
+    border-radius: 6px;
+    font-size: 0.82em;
+    padding: 0.15em 0.5em;
+    font-weight: 500;
+}
+
+:root[data-theme=dark] .tag[data-category=partOfSpeech] {
+    background-color: var(--fenix-secondary-mauve);
+    color: var(--fenix-ivory-text);
+    border-color: rgba(240, 161, 199, 0.25);
+}
+
+:root[data-theme=dark] .tag[data-category=frequency],
+:root[data-theme=dark] .tag[data-category=popular] {
+    background-color: var(--fenix-peach-container);
+    color: var(--fenix-peach-highlight);
+    border-color: var(--fenix-peach-border);
+}
+
+:root[data-theme=dark] .tag[data-category=dictionary] {
+    background-color: #3b2b3e;
+    color: #e6b7e8;
+    border-color: rgba(230, 183, 232, 0.2);
+}
+
+/* Vietnamese definitions (Primary) */
+:root[data-theme=dark] .gloss-item {
+    color: var(--fenix-ivory-text);
+    line-height: 1.55;
+}
+
+:root[data-theme=dark] [data-sc-content=vi] {
+    color: var(--fenix-ivory-text);
+    font-weight: 500;
+}
+
+/* English definitions (Secondary Fallback) */
+:root[data-theme=dark] [data-sc-content=en] {
+    color: #d8b4c8;
+    font-style: italic;
+    opacity: 0.9;
+}
+
+/* Context & Example Sentences */
+:root[data-theme=dark] [data-sc-content=example],
+:root[data-theme=dark] [data-sc-content=example-sentence] {
+    background-color: var(--fenix-card-surface);
+    border-left: 3px solid var(--fenix-secondary-mauve);
+    border-radius: 0 8px 8px 0;
+    padding: 0.45em 0.7em;
+    margin: 0.45em 0;
+}
+
+/* Pitch Accent notation */
+:root[data-theme=dark] .pronunciation-graph {
+    color: var(--fenix-peach-highlight);
+}
+
+:root[data-theme=dark] .pronunciation-downstep-notation {
+    color: var(--fenix-accent-pink);
+}
+
+/* Action Buttons (Audio, Bookmark, Kebab) */
+:root[data-theme=dark] .action-button {
+    background-color: var(--fenix-card-surface);
+    border-radius: 8px;
+    color: var(--fenix-peach-highlight);
+    border: 1px solid var(--fenix-hairline-border);
+    transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+:root[data-theme=dark] .action-button:hover {
+    background-color: var(--fenix-primary-plum);
+    color: var(--fenix-ivory-text);
+}
+
+:root[data-theme=dark] .action-button:active {
+    transform: scale(0.92);
+}
+
+/* Kanji breakdown entries */
+:root[data-theme=dark] .kanji-entry {
+    background-color: var(--fenix-card-bg);
+    border: 1px solid var(--fenix-hairline-border);
+    border-radius: 12px;
+}
+
+:root[data-theme=dark] .kanji-glyph-container {
+    background-color: var(--fenix-card-elevated);
+    border-radius: 10px;
+    border: 1px solid var(--fenix-hairline-border);
+    color: var(--fenix-peach-highlight);
+}
+
+:root[data-theme=dark] .kanji-glyph-data-table {
+    background-color: var(--fenix-card-surface);
+    border-radius: 10px;
+    border: 1px solid var(--fenix-hairline-border);
+    color: var(--fenix-plum-text);
+}
+
+/* Sidebar navigation in popup */
+:root[data-theme=dark] .content-sidebar {
+    background-color: var(--fenix-bg-canvas-deep);
+    border-left: 1px solid var(--fenix-hairline-border);
+}
+
+:root[data-theme=dark] .sidebar-button {
+    color: var(--fenix-peach-dim);
+    border-radius: 8px;
+}
+
+:root[data-theme=dark] .sidebar-button:hover:not(:disabled) {
+    background-color: var(--fenix-card-elevated);
+    color: var(--fenix-ivory-text);
+}
+
+:root[data-theme=dark] .sidebar-button:disabled {
+    opacity: 0.3;
+}
+
+/* ==========================================================================
+   Light Theme (Violet Dusk Day) - Warm Ivory with Plum Accents
+   ========================================================================== */
+
+:root[data-theme=light] {
+    --background-color: #f8f4e9;
+    --text-color: #2b152e;
+    --accent-color: #935073;
+    --accent-color-dark: #502d55;
+    --accent-color-light: #ffafd5;
+
+    --headword-text-color: #2b152e;
+    --headword-text-color-popular: #502d55;
+    --headword-furigana-text-color: #713455;
+    --headword-reading-text-color: #502d55;
+
+    --light-border-color: rgba(80, 45, 85, 0.08);
+    --medium-border-color: rgba(80, 45, 85, 0.15);
+    --dark-border-color: rgba(80, 45, 85, 0.35);
+
+    --sidebar-background-color: #efeae0;
+    --sidebar-button-icon-color: #502d55;
+    --sidebar-button-background-color: transparent;
+    --sidebar-button-background-color-hover: #e5ded2;
+    --sidebar-button-background-color-active: #dcd3c4;
+
+    --action-button-hover-color: #e5ded2;
+    --action-button-active-color: #dcd3c4;
+}
+
+:root[data-theme=light] .entry {
+    background-color: #ffffff;
+    border: 1px solid rgba(80, 45, 85, 0.12);
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(80, 45, 85, 0.06);
+}
+
+:root[data-theme=light] [data-sc-content=han-viet],
+:root[data-theme=light] .fenix-han-viet,
+:root[data-theme=light] .tag[data-category=han-viet] {
+    background-color: #faede1;
+    color: #713455;
+    border: 1px solid rgba(147, 80, 115, 0.25);
+    border-radius: 6px;
+    font-weight: bold;
+    padding: 0.15em 0.55em;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+:root[data-theme=light] .tag {
+    background-color: #713455;
+    color: #ffffff;
+    border-radius: 6px;
+}
+
+:root[data-theme=light] .tag[data-category=frequency],
+:root[data-theme=light] .tag[data-category=popular] {
+    background-color: #faede1;
+    color: #502d55;
+    border: 1px solid rgba(80, 45, 85, 0.2);
+}
