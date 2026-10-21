@@ -179,7 +179,7 @@
                     <div class="settings-item-left">
                         <div class="settings-item-invalid-indicator"></div>
                         <div class="settings-item-label">
-                            Enable Yomitan API
+                            Enable External Desktop API
                         </div>
                         <div class="settings-item-description">
                             Enable support for sending local web requests to fetch data from FenixJpCatch.
@@ -201,8 +201,8 @@
                 </div>
                 <div class="settings-item-children more" hidden>
                     <p>
-                        To activate the Yomitan API, a native messaging component must be installed.
-                        A setup guide can be found <a href="https://github.com/yomidevs/yomitan-api/blob/master/README.md" target="_blank" rel="noopener noreferrer">here</a>.
+                        To activate this API, a native messaging component must be installed.
+                        A setup guide can be found <a href="https://github.com/quyen-eas/fenixjpcatch-extension" target="_blank" rel="noopener noreferrer">here</a>.
                     </p>
                     <div class="margin-above flex-row-nowrap">
                         <button type="button" id="test-yomitan-api-button">Test</button>
@@ -230,21 +230,21 @@
                                 <div class="settings-item-description more" hidden>
                                     <p>
                                         A malicious dictionary which contains malicious CSS may try to execute Javascript.
-                                        For example, if the output of the Yomitan API is used in Anki, then the resulting Anki card may execute unintended Javascript.
+                                        For example, if the output of the API is used in Anki, then the resulting Anki card may execute unintended Javascript.
                                         The risk in this case is similar to downloading a malicious Anki deck.
                                         Namely, in both cases, you are relying purely on Anki's sandbox to protect your machine and information from the malicious code.
                                         If the Anki sandbox works, card contents could be leaked (a minor confidential issue).
                                         If the sandbox fails, there is much more to worry about (actions being taken on your machine such as stealing credentials and sensitive information, or ransomware taking over your computer).
                                     </p>
                                     <p>
-                                        If you choose to disable the CSS sanitization, we recommend thinking end-to-end about where the Yomitan API output is used, and whether that destination is resilient to potentially malicious Javascript code being included, otherwise you are potentially risking the data and integrity of your system.
+                                        If you choose to disable the CSS sanitization, we recommend thinking end-to-end about where the API output is used, and whether that destination is resilient to potentially malicious Javascript code being included, otherwise you are potentially risking the data and integrity of your system.
                                     </p>
                                     <p>
                                         Sanitization bypass will allow CSS that cannot be sanitized to pass through the sanitizer unchanged.
-                                        This ONLY applies to the Yomitan API, it will not make any other areas of FenixJpCatch potentially vulnerable.
+                                        This ONLY applies to the API, it will not make any other areas of FenixJpCatch potentially vulnerable.
                                     </p>
                                     <p>
-                                        This can be required to retrieve CSS on some browsers which do not support the offscreen page necessary for full CSS sanitization in the Yomitan API on the backend.
+                                        This can be required to retrieve CSS on some browsers which do not support the offscreen page necessary for full CSS sanitization in the API on the backend.
                                         FenixJpCatch will attempt to fall back on basic sanitization but this will fail for dictionaries making use of complex CSS.
                                     </p>
                                     <p class="margin-above">
@@ -1720,7 +1720,7 @@
                 </p>
                 <p>
                     In order for FenixJpCatch to use it, both MeCab and a native messaging component must be installed.
-                    A setup guide can be found <a href="https://github.com/yomidevs/yomitan-mecab-installer/blob/master/README.md" target="_blank" rel="noopener noreferrer">here</a>.
+                    A setup guide can be found <a href="https://github.com/yomidevs/yomitan-mecab-installer/blob/master/README.md" target="_blank" rel="noopener noreferrer">here (MeCab setup guide)</a>.
                 </p>
                 <div class="margin-above flex-row-nowrap">
                     <button type="button" id="test-mecab-button">Test</button>
@@ -2385,8 +2385,8 @@
 
                     <br><br>
 
-                    See <a href="https://github.com/yomidevs/yomichan-data-exporter" target="_blank" rel="noopener noreferrer">yomichan-data-exporter</a> for
-                    instructions to export your data from older Yomichan installations.
+                    See the <a href="https://github.com/yomidevs/yomichan-data-exporter" target="_blank" rel="noopener noreferrer">data-exporter</a> for
+                    instructions to export your data from older dictionary installations.
                 </div>
             </div>
         </div></div>

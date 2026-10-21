@@ -214,7 +214,7 @@ export class BackupController {
         }
         this._settingsExportToken = null;
 
-        const fileName = `yomitan-settings-${this._getSettingsExportDateString(date, '-', '-', '-', 6)}.json`;
+        const fileName = `fenixjpcatch-settings-${this._getSettingsExportDateString(date, '-', '-', '-', 6)}.json`;
         const blob = new Blob([JSON.stringify(data, null, 4)], {type: 'application/json'});
         this._saveBlob(blob, fileName);
     }
@@ -598,7 +598,7 @@ export class BackupController {
             /** @type {import('core').TokenObject} */
             const token = {};
             this._settingsExportDatabaseToken = token;
-            const fileName = `yomitan-dictionaries-${this._getSettingsExportDateString(date, '-', '-', '-', 6)}.json`;
+            const fileName = `fenixjpcatch-dictionaries-${this._getSettingsExportDateString(date, '-', '-', '-', 6)}.json`;
             const data = await this._exportDatabase(this._dictionariesDatabaseName);
             const blob = new Blob([data], {type: 'application/json'});
             this._saveBlob(blob, fileName);
@@ -630,7 +630,7 @@ export class BackupController {
         if (done) {
             log.log('Done importing.');
             messageContainer.style.color = '#006633';
-            messageContainer.textContent = 'Done importing. You will need to re-enable the dictionaries and refresh afterward. If you run into issues, please restart the browser. If it continues to fail, reinstall Yomitan and import dictionaries one-by-one.';
+            messageContainer.textContent = 'Done importing. You will need to re-enable the dictionaries and refresh afterward. If you run into issues, please restart the browser. If it continues to fail, reinstall FenixJpCatch and import dictionaries one-by-one.';
         }
     }
 
@@ -685,7 +685,7 @@ export class BackupController {
             /** @type {HTMLElement} */
             const messageContainer = querySelectorNotNull(document, '#db-ops-progress-report');
             messageContainer.style.color = 'red';
-            this._databaseExportImportErrorMessage('Encountered errors when importing. Please restart the browser and try again. If it continues to fail, reinstall Yomitan and import dictionaries one-by-one.');
+            this._databaseExportImportErrorMessage('Encountered errors when importing. Please restart the browser and try again. If it continues to fail, reinstall FenixJpCatch and import dictionaries one-by-one.');
         } finally {
             pageExitPrevention.end();
             this._settingsExportDatabaseToken = null;

@@ -3,7 +3,7 @@
         "manifest_version": 3,
         "name": "FenixJpCatch",
         "version": "$YOMITAN_VERSION",
-        "description": "Từ điển Nhật–Việt dạng popup, tra nhanh khi đọc web. Based on Yomitan",
+        "description": "Từ điển Nhật–Việt dạng popup thông minh, tra cứu nhanh khi đọc báo, xem web.",
         "author": "Fenix Labs",
         "icons": {
             "16": "images/icon16.png",
@@ -32,7 +32,7 @@
             "type": "module"
         },
         "omnibox": {
-            "keyword": "yomi"
+            "keyword": "fenix"
         },
         "content_scripts": [
             {
