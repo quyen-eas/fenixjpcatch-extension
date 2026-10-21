@@ -1,229 +1,362 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="dark" lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Welcome to FenixJpCatch!</title>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <meta content="web_standard" name="shell-type">
+    <title>Chào mừng &amp; Thiết lập - FenixJpCatch</title>
     <link rel="icon" type="image/png" href="/images/icon16.png" sizes="16x16">
-    <link rel="icon" type="image/png" href="/images/icon19.png" sizes="19x19">
     <link rel="icon" type="image/png" href="/images/icon32.png" sizes="32x32">
-    <link rel="icon" type="image/png" href="/images/icon38.png" sizes="38x38">
     <link rel="icon" type="image/png" href="/images/icon48.png" sizes="48x48">
-    <link rel="icon" type="image/png" href="/images/icon64.png" sizes="64x64">
     <link rel="icon" type="image/png" href="/images/icon128.png" sizes="128x128">
-    <link rel="stylesheet" type="text/css" href="/css/material.css">
-    <link rel="stylesheet" type="text/css" href="/css/settings.css">
-    <link rel="stylesheet" type="text/css" href="/css/visibility-modifiers.css">
-    <script src="/js/pages/welcome-main.js" type="module"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="/css/fenix-stitch.css">
+    <script src="/lib/fenix/welcome-ui.js" type="module"></script>
 </head>
-<body hidden>
+<body class="bg-background font-body-md text-on-surface antialiased selection:bg-secondary-container selection:text-on-secondary-container">
 
-<!-- Main content -->
-<div class="content-outer"><div class="content scrollbar">
-<div class="content-left"></div>
-<div class="content-center">
-    <span tabindex="-1" id="content-scroll-focus"></span>
-
-    <h1>Welcome to FenixJpCatch!</h1>
-
-    <h2><strong>Recommended Permissions &#40;Important&#41;</strong></h2>
-    <div class="settings-group">
-        <div class="settings-item"><div class="settings-item-inner">
-            <div class="settings-item-left">
-                <div class="settings-item-label">Enable recommended permissions</div>
-                <div class="settings-item-description">This will allow FenixJpCatch to scan text from most sites.</div>
-            </div>
-            <div class="settings-item-right">
-                <label class="toggle"><input type="checkbox" id="recommended-permissions-toggle" data-origin="&lt;all_urls&gt;"><span class="toggle-body"><span class="toggle-track"></span><span class="toggle-knob"></span></span></label>
-            </div>
-        </div></div>
-        <div class="settings-item"><div class="settings-item-inner">
-            <div class="settings-item-left">
-                <div class="settings-item-label">Enable optional permissions</div>
-                <div class="settings-item-description">This will allow FenixJpCatch to read the clipboard and communicate with external programs.</div>
-            </div>
-            <div class="settings-item-right">
-                <label class="toggle"><input type="checkbox" id="optional-permissions-toggle" data-origin="&lt;all_urls&gt;"><span class="toggle-body"><span class="toggle-track"></span><span class="toggle-knob"></span></span></label>
-            </div>
-        </div></div>
-        <div class="settings-item"><div class="settings-item-inner">
-            <div class="settings-item-left">
-                <div class="settings-item-description" data-hide-for-browser="firefox firefox-mobile">Further configuration is available on the <a href="/permissions.html" rel="noopener">Permissions page</a> and the web browser's <a tabindex="0" class="extension-settings-link" data-special-url="chrome://extensions/?id={id}">extension settings page</a>.</div>
-                <div class="settings-item-description" data-show-for-browser="firefox firefox-mobile">Further configuration is available on the <a href="/permissions.html" rel="noopener">Permissions page</a> and the web browser's extension settings page.</div>
-                <div class="danger-text margin-above" id="permissions-disabled" hidden><strong>FenixJpCatch features will be limited if the recommended permissions are not enabled.</strong></div>
-                <div class="success-text margin-above" id="recommended-permissions-enabled" hidden><strong>Essential FenixJpCatch features are available.</strong></div>
-                <div class="success-text margin-above" id="full-permissions-enabled" hidden><strong>All FenixJpCatch features are available.</strong></div>
-                <div id="recommended-permissions-error" class="margin-above danger-text" hidden></div>
-            </div>
-        </div></div>
-    </div>
-
-    <!-- Notifications -->
-    <div class="settings-group settings-group-top-margin warn-custom-templates-notification">
-      <div class="settings-item">
-        <div class="settings-item-inner settings-item-inner-wrappable"><div class="settings-item-left"><div class="settings-item-label">
-              <p>
-                There are custom Anki templates in your settings. Note that <a href="https://yomitan.wiki/yomichan-migration/#custom-templates" target="_blank" rel="noopener noreferrer">some syntax has changed from previous versions.</a>
-                Please ensure that your custom templates are using the updated syntax.
-              </p>
-          </div></div></div>
-      </div>
-    </div>
-
-    <!-- Content -->
-    <h2><strong>Import Dictionaries &#40;Important&#41;</strong></h2>
-    <div class="settings-group">
-        <div class="settings-item"><div class="settings-item-inner settings-item-inner-wrappable">
-            <div class="settings-item-left">
-                <div class="settings-item-label">
-                    Language
-                </div>
-                <div class="settings-item-description">
-                    Language of the text that is being looked up.
+<header class="fixed top-0 left-0 right-0 z-50 bg-surface-container-lowest/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
+    <div class="h-20 w-full px-margin flex items-center justify-between gap-space-md">
+        <div class="flex items-center gap-space-lg flex-shrink-0">
+            <div class="flex items-center gap-space-md">
+                <img alt="FenixJpCatch Brand Logo" class="h-8 w-auto object-contain" src="/images/icon48.png">
+                <div class="flex flex-col">
+                    <span class="font-headline-sm text-headline-sm text-tertiary-fixed tracking-tight leading-none">FenixJpCatch</span>
+                    <span class="font-label-sm text-label-sm text-on-surface-variant leading-tight mt-0.5">Từ điển Nhật - Việt Thông Minh</span>
                 </div>
             </div>
-            <div class="settings-item-right">
-                <select id="language-select" data-setting="general.language"></select>
-            </div>
-        </div></div>
-        <div class="settings-item" hidden style="display: none !important;">
-            <div class="settings-item settings-item-button" data-modal-action="show,recommended-dictionaries"><div class="settings-item-inner">
-                <div class="settings-item-left">
-                    <div class="settings-item-label">Get recommended dictionaries&hellip;</div>
-                </div>
-                <div class="settings-item-right open-panel-button-container">
-                    <button type="button" class="icon-button"><span class="icon-button-inner"><span class="icon" data-icon="material-right-arrow"></span></span></button>
-                </div>
-            </div></div>
+            <nav aria-label="Điều hướng chính" class="hidden xl:flex items-center gap-space-xs p-1">
+                <a class="px-space-md py-space-xs rounded-lg font-label-lg text-label-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" href="/fenix-welcome.html">Tra từ Hover</a>
+                <a class="px-space-md py-space-xs rounded-lg font-label-lg text-label-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" href="/saved-words.html" target="_blank">Từ đã lưu</a>
+                <a class="px-space-md py-space-xs rounded-lg font-label-lg text-label-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" href="/search.html" target="_blank">Tìm kiếm</a>
+                <a class="px-space-md py-space-xs rounded-lg font-label-lg text-label-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" href="/settings.html">Cài đặt</a>
+                <a class="px-space-md py-space-xs rounded-lg font-label-lg text-label-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" href="/fenix-about.html">Giới thiệu</a>
+            </nav>
         </div>
-        <div class="settings-item">
-            <div class="settings-item settings-item-button" data-modal-action="show,dictionaries"><div class="settings-item-inner">
-                <div class="settings-item-left">
-                    <div class="settings-item-label">Configure Installed and enabled dictionaries&hellip;</div>
-                </div>
-                <div class="settings-item-right open-panel-button-container">
-                    <button type="button" class="icon-button"><span class="icon-button-inner"><span class="icon" data-icon="material-right-arrow"></span></span></button>
-                </div>
-            </div></div>
-        </div>
-    </div>
-
-    <!-- Data Transmission -->
-    <h2><strong>Data Transmission</strong></h2>
-    <div class="settings-group">
-        <div class="settings-item"><div class="settings-item-inner">
-            <div class="settings-item-left">
-                <div class="settings-item-label">Enable audio playback for terms</div>
-                <div class="settings-item-description">Show a clickable speaker icon next to search results.</div>
-                <div class="settings-item-description">
-                    This option may send term, reading, and/or language outside of FenixJpCatch to fetch audio when the speaker icon is clicked. Personally identifying information is never sent<span data-show-for-browser="firefox firefox-mobile"> (<a href="/legal.html">Privacy Policy</a>)</span>.
-                    <div data-show-for-browser="firefox firefox-mobile">Disabling this option will disallow pronunciation audio playback for any terms searched.</div>
-                </div>
+        <div class="flex items-center gap-space-md flex-shrink-0">
+            <div class="flex items-center gap-space-sm bg-surface-container px-space-md py-space-xs rounded-full shadow-inner">
+                <span class="w-2 h-2 rounded-full bg-tertiary animate-pulse"></span>
+                <span class="font-label-md text-label-md text-on-surface-variant hidden sm:inline">Bật tra từ</span>
+                <label class="w-7 h-4 bg-primary-container rounded-full relative flex items-center p-0.5 cursor-pointer">
+                    <input id="header-search-toggle" type="checkbox" checked class="sr-only peer">
+                    <div class="w-3 h-3 bg-tertiary-fixed rounded-full ml-auto shadow-sm transition-all peer-checked:ml-auto"></div>
+                </label>
             </div>
-            <div class="settings-item-right">
-                <label class="toggle"><input type="checkbox" data-setting="audio.enabled"><span class="toggle-body"><span class="toggle-track"></span><span class="toggle-knob"></span></span></label>
+            <div class="hidden md:flex items-center gap-1.5 px-space-sm py-1 bg-surface-container-low rounded-lg text-on-surface-variant font-label-sm text-label-sm">
+                <span class="material-symbols-outlined text-[16px] text-tertiary">cloud_done</span>
+                <span class="hidden lg:inline">Đã đồng bộ</span>
             </div>
-        </div></div>
-    </div>
-
-    <h2>Here are some basics to get started</h2>
-    <div class="settings-group">
-        <a href="/fenix-welcome.html" rel="noopener noreferrer" class="settings-item settings-item-button"><div class="settings-item-inner">
-            <div class="settings-item-left">
-                <div class="settings-item-label"><strong>Xem trang chào mừng tiếng Việt FenixJpCatch!</strong></div>
-            </div>
-            <div class="settings-item-right open-panel-button-container">
-                <button type="button" class="icon-button"><span class="icon-button-inner"><span class="icon" data-icon="material-right-arrow"></span></span></button>
-            </div>
-        </div></a>
-        <a href="/quick-start-guide.html" rel="noopener" class="settings-item settings-item-button"><div class="settings-item-inner">
-            <div class="settings-item-left">
-                <div class="settings-item-label">FenixJpCatch Quick Start Guide</div>
-            </div>
-            <div class="settings-item-right open-panel-button-container">
-                <button type="button" class="icon-button"><span class="icon-button-inner"><span class="icon" data-icon="material-right-arrow"></span></span></button>
-            </div>
-        </div></a>
-    </div>
-
-    <h2>Basic customization</h2>
-    <div class="settings-group">
-        <div class="settings-item"><div class="settings-item-inner">
-            <div class="settings-item-left">
-                <div class="settings-item-label">Show this welcome guide on browser startup</div>
-            </div>
-            <div class="settings-item-right">
-                <label class="toggle"><input type="checkbox" data-setting="general.showGuide"><span class="toggle-body"><span class="toggle-track"></span><span class="toggle-knob"></span></span></label>
-            </div>
-        </div></div>
-        <div class="settings-item">
-            <div class="settings-item-inner settings-item-inner-wrappable">
-                <div class="settings-item-left">
-                    <div class="settings-item-label">Scan modifier key</div>
-                    <div class="settings-item-description">Hold a key while moving the cursor to scan text.</div>
-                </div>
-                <div class="settings-item-right">
-                    <select id="main-scan-modifier-key"></select>
+            <div class="flex items-center pl-space-xs">
+                <div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center text-secondary ring-2 ring-tertiary-container">
+                    <span class="material-symbols-outlined text-[18px]">person</span>
                 </div>
             </div>
         </div>
-        <div class="settings-item"><div class="settings-item-inner">
-            <div class="settings-item-left">
-                <div class="settings-item-label">Scan using middle mouse button</div>
-                <div class="settings-item-description">Hold the middle mouse button while moving the cursor to scan text.</div>
-            </div>
-            <div class="settings-item-right">
-                <label class="toggle"><input type="checkbox" id="middle-mouse-button-scan"><span class="toggle-body"><span class="toggle-track"></span><span class="toggle-knob"></span></span></label>
-            </div>
-        </div></div>
-        <div class="settings-item"><div class="settings-item-inner settings-item-inner-wrappable">
-            <div class="settings-item-left">
-                <div class="settings-item-label">Theme</div>
-                <div class="settings-item-description">Adjust the style of FenixJpCatch.</div>
-            </div>
-            <div class="settings-item-right">
-                <select data-setting="general.popupTheme" class="short-width">
-                    <option value="site">Auto</option>
-                    <option value="light">Light</option>
-                    <option value="dark">Dark</option>
-                    <option value="browser">Browser</option>
-                </select>
-            </div>
-        </div></div>
-        <a href="/settings.html" rel="noopener" class="settings-item settings-item-button"><div class="settings-item-inner">
-            <div class="settings-item-left">
-                <div class="settings-item-label">More customization options are available on the Settings page</div>
-            </div>
-            <div class="settings-item-right open-panel-button-container">
-                <button type="button" class="icon-button"><span class="icon-button-inner"><span class="icon" data-icon="material-right-arrow"></span></span></button>
-            </div>
-        </div></a>
     </div>
+</header>
 
-    <div class="footer-padding"></div>
+<main class="w-full pt-20 bg-background min-h-screen">
+    <div class="flex flex-col w-full">
+        <!-- Interactive Ambient Atmospheric Layers -->
+        <div class="relative w-full overflow-hidden px-margin pb-space-xl">
+            <!-- Radial Atmospheric Lighting Shards -->
+            <div class="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 w-[900px] h-[550px] bg-gradient-to-b from-primary-container/30 via-secondary-container/20 to-transparent blur-[140px] opacity-75"></div>
+            <div class="pointer-events-none absolute top-72 -left-32 w-80 h-80 bg-tertiary-container/25 rounded-full blur-[100px]"></div>
+            <div class="pointer-events-none absolute top-96 -right-24 w-96 h-96 bg-primary/10 rounded-full blur-[120px]"></div>
 
-</div>
-<div class="content-right"></div>
-</div></div>
+            <div class="max-w-6xl mx-auto w-full relative z-10">
 
+                <!-- 1. HERO / HEADER SECTION -->
+                <section class="flex flex-col items-center text-center pt-space-lg pb-space-xl">
+                    <!-- Floating Phoenix Halo Graphic -->
+                    <div class="relative mb-space-lg group cursor-pointer">
+                        <div class="absolute -inset-3 bg-gradient-to-r from-secondary-container via-primary-container to-tertiary-container rounded-full blur-xl opacity-60 group-hover:opacity-90 transition duration-700 animate-pulse"></div>
+                        <div class="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-surface-container-high flex items-center justify-center shadow-[0_4px_30px_rgba(147,80,115,0.4)] ring-1 ring-tertiary/20">
+                            <!-- Stylized Phoenix Icon Geometry -->
+                            <svg class="w-12 h-12 sm:w-14 sm:h-14 text-tertiary-fixed transition-transform duration-500 group-hover:scale-110" fill="none" viewbox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M24 4C24 4 19 14 11 18C4 21.5 2 30 7 37C11.5 43.3 20 44 24 44C28 44 36.5 43.3 41 37C46 30 44 21.5 37 18C29 14 24 4 24 4Z" fill="currentColor" fill-opacity="0.12"></path>
+                                <path d="M24 10C24 10 21 17 15 20C9.5 22.8 8.5 29 12 34C15 38.5 21 39 24 39C27 39 33 38.5 36 34C39.5 29 38.5 22.8 33 20C27 17 24 10 24 10Z" fill="url(#phoenixGrad)"></path>
+                                <circle cx="24" cy="22" fill="#1C0E20" r="3.5"></circle>
+                                <path d="M20 28C22 30 26 30 28 28" stroke="#1C0E20" stroke-linecap="round" stroke-width="2"></path>
+                                <defs>
+                                    <lineargradient gradientunits="userSpaceOnUse" id="phoenixGrad" x1="12" x2="36" y1="10" y2="39">
+                                        <stop stop-color="#F9DEC3"></stop>
+                                        <stop offset="0.5" stop-color="#FFAFD5"></stop>
+                                        <stop offset="1" stop-color="#E6B7E8"></stop>
+                                    </lineargradient>
+                                </defs>
+                            </svg>
+                        </div>
+                        <span class="absolute -bottom-1 -right-1 flex h-4 w-4">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-tertiary opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-4 w-4 bg-tertiary-fixed border-2 border-surface-container-lowest"></span>
+                        </span>
+                    </div>
 
-<!-- Auxiliary content -->
-<div class="status-footer-container" hidden><div class="status-footer-container2">
-    <div class="status-footer">
-        <div class="status-footer-header"><div class="status-footer-header-label">Tasks in progress:</div><a tabindex="0" class="status-footer-header-close">Close</a></div>
-        <div class="status-footer-item dictionary-delete-progress" hidden>
-            <div class="progress-labels"><div class="progress-info"></div><div class="progress-status"></div></div>
-            <div class="progress-bar-track"><div class="progress-bar danger"></div></div>
-        </div>
-        <div class="status-footer-item dictionary-import-progress" hidden>
-            <div class="progress-labels"><div class="progress-info"></div><div class="progress-status"></div></div>
-            <div class="progress-bar-track"><div class="progress-bar"></div></div>
+                    <!-- Offline Status Pill -->
+                    <div class="inline-flex items-center gap-space-xs px-3.5 py-1 rounded-full bg-surface-container-high/90 backdrop-blur-md shadow-inner text-tertiary-fixed font-label-md text-label-md mb-space-md">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                        <span>Phiên bản v0.2.4</span>
+                        <span class="opacity-40">•</span>
+                        <span class="text-on-surface-variant flex items-center gap-1 font-label-sm text-label-sm">
+                            <span class="material-symbols-outlined text-[14px] text-tertiary">offline_pin</span>
+                            Sẵn sàng ngoại tuyến
+                        </span>
+                    </div>
+
+                    <!-- Title & Subtitle -->
+                    <h1 class="font-headline-lg text-3xl sm:text-4xl lg:text-[40px] text-on-surface tracking-tight font-bold max-w-3xl leading-snug">
+                        Chào mừng bạn đến với <span class="text-transparent bg-clip-text bg-gradient-to-r from-tertiary-fixed via-secondary to-primary">FenixJpCatch</span>
+                    </h1>
+                    <p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mt-space-sm leading-relaxed">
+                        Tiện ích tra từ Nhật – Việt thông minh &amp; học Hán tự chuyên sâu với trường nghĩa ngữ cảnh, phát âm chuẩn xác ngay trên trình duyệt.
+                    </p>
+                </section>
+
+                <!-- 2. THREE-STEP GUIDED ONBOARDING STEPPER -->
+                <section class="grid grid-cols-1 md:grid-cols-3 gap-space-lg mb-space-xl">
+
+                    <!-- Bước 1: Quyền truy cập trang web -->
+                    <div class="relative group bg-surface-container-low/90 backdrop-blur-xl p-space-lg rounded-xl shadow-lg flex flex-col justify-between transition-all duration-300 hover:bg-surface-container">
+                        <div class="flex flex-col gap-space-sm">
+                            <div class="flex items-center justify-between">
+                                <span class="px-2.5 py-1 rounded-md bg-secondary-container/60 text-secondary font-label-sm text-label-sm tracking-wide uppercase font-semibold">
+                                    Bước 01
+                                </span>
+                                <div id="permissionStatusBadge" class="flex items-center gap-1.5 text-emerald-400 font-label-sm text-label-sm bg-emerald-950/40 px-2 py-0.5 rounded-full">
+                                    <span class="material-symbols-outlined text-[14px]">check_circle</span>
+                                    <span>Đã cấp quyền</span>
+                                </div>
+                            </div>
+                            <h2 class="font-headline-sm text-headline-sm text-on-surface font-semibold pt-1">
+                                Cấp quyền tra cứu trên mọi trang web
+                            </h2>
+                            <p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
+                                FenixJpCatch cần quyền inject script để nhận diện Hán tự và hiển thị thẻ popup tức thì khi bạn lướt web.
+                            </p>
+                        </div>
+
+                        <div class="mt-space-lg pt-space-md bg-surface-container-lowest/60 p-space-md rounded-lg flex items-center justify-between">
+                            <div class="flex items-center gap-space-sm">
+                                <div class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center text-primary">
+                                    <span class="material-symbols-outlined text-[18px]">verified_user</span>
+                                </div>
+                                <div class="flex flex-col">
+                                    <span class="font-label-md text-label-md text-on-surface font-medium">Bảo vệ riêng tư</span>
+                                    <span class="font-label-sm text-label-sm text-on-surface-variant/80">Không lưu lịch sử lướt</span>
+                                </div>
+                            </div>
+
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input checked class="sr-only peer" id="permissionToggle" type="checkbox">
+                                <div class="w-11 h-6 bg-surface-variant peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-surface-dim after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-secondary-container peer-checked:to-primary"></div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Bước 2: Dữ liệu Offline Sẵn Sàng -->
+                    <div class="relative group bg-surface-container-low/90 backdrop-blur-xl p-space-lg rounded-xl shadow-lg flex flex-col justify-between transition-all duration-300 hover:bg-surface-container">
+                        <div class="flex flex-col gap-space-sm">
+                            <div class="flex items-center justify-between">
+                                <span class="px-2.5 py-1 rounded-md bg-secondary-container/60 text-secondary font-label-sm text-label-sm tracking-wide uppercase font-semibold">
+                                    Bước 02
+                                </span>
+                                <div class="flex items-center gap-1.5 text-tertiary-fixed font-label-sm text-label-sm bg-tertiary-container/60 px-2 py-0.5 rounded-full">
+                                    <span class="material-symbols-outlined text-[14px]">storage</span>
+                                    <span>IndexedDB Sẵn Sàng</span>
+                                </div>
+                            </div>
+                            <h2 class="font-headline-sm text-headline-sm text-on-surface font-semibold pt-1">
+                                Từ điển ngoại tuyến tích hợp
+                            </h2>
+                            <p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
+                                Nạp sẵn kho dữ liệu Hán – Việt hoàn chỉnh. Tra cứu siêu tốc độ trễ &lt;10ms, không phụ thuộc kết nối mạng.
+                            </p>
+                        </div>
+
+                        <div class="mt-space-lg flex flex-col gap-space-xs">
+                            <div class="bg-surface-container-lowest/60 p-space-sm rounded-lg flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-tertiary text-[18px]">database</span>
+                                    <span class="font-label-md text-label-md text-on-surface">180,000+ Mục từ &amp; Hán Tự</span>
+                                </div>
+                                <span class="font-label-sm text-label-sm text-emerald-400 font-semibold">100% Sẵn sàng</span>
+                            </div>
+                            <div class="flex flex-wrap gap-1.5 pt-1">
+                                <span class="px-2 py-0.5 rounded bg-surface-container-high text-tertiary-fixed-dim font-label-sm text-label-sm">JA-VI Chuẩn</span>
+                                <span class="px-2 py-0.5 rounded bg-surface-container-high text-tertiary-fixed-dim font-label-sm text-label-sm">Âm Hán Việt</span>
+                                <span class="px-2 py-0.5 rounded bg-surface-container-high text-tertiary-fixed-dim font-label-sm text-label-sm">Kèm nét viết</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bước 3: Tuỳ chỉnh kích hoạt quét -->
+                    <div class="relative group bg-surface-container-low/90 backdrop-blur-xl p-space-lg rounded-xl shadow-lg flex flex-col justify-between transition-all duration-300 hover:bg-surface-container">
+                        <div class="flex flex-col gap-space-sm">
+                            <div class="flex items-center justify-between">
+                                <span class="px-2.5 py-1 rounded-md bg-secondary-container/60 text-secondary font-label-sm text-label-sm tracking-wide uppercase font-semibold">
+                                    Bước 03
+                                </span>
+                                <span class="text-on-surface-variant font-label-sm text-label-sm">Tuỳ chọn thao tác</span>
+                            </div>
+                            <h2 class="font-headline-sm text-headline-sm text-on-surface font-semibold pt-1">
+                                Cách thức kích hoạt nhanh
+                            </h2>
+                            <p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
+                                Chọn cơ chế kích hoạt tra từ thuận tay nhất với bạn trong khi đọc văn bản web:
+                            </p>
+                        </div>
+
+                        <div class="mt-space-md flex flex-col gap-2" id="triggerModeContainer">
+                            <label class="flex items-center justify-between p-2 rounded-lg bg-surface-container-highest cursor-pointer hover:bg-surface-bright transition-colors text-on-surface trigger-option">
+                                <div class="flex items-center gap-2">
+                                    <input checked class="accent-tertiary-fixed w-4 h-4 cursor-pointer" name="triggerMode" type="radio" value="none">
+                                    <span class="font-label-md text-label-md font-medium">Rê chuột tự do (Hover)</span>
+                                </div>
+                                <span class="text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded bg-primary-container text-on-primary-container">Mặc định</span>
+                            </label>
+
+                            <label class="flex items-center justify-between p-2 rounded-lg bg-surface-container-lowest/60 cursor-pointer hover:bg-surface-container-high transition-colors text-on-surface-variant hover:text-on-surface trigger-option">
+                                <div class="flex items-center gap-2">
+                                    <input class="accent-tertiary-fixed w-4 h-4 cursor-pointer" name="triggerMode" type="radio" value="shift">
+                                    <span class="font-label-md text-label-md">Giữ Shift + Rê chuột</span>
+                                </div>
+                                <span class="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded bg-surface-variant text-tertiary">Khuyên dùng</span>
+                            </label>
+
+                            <label class="flex items-center justify-between p-2 rounded-lg bg-surface-container-lowest/60 cursor-pointer hover:bg-surface-container-high transition-colors text-on-surface-variant hover:text-on-surface trigger-option">
+                                <div class="flex items-center gap-2">
+                                    <input class="accent-tertiary-fixed w-4 h-4 cursor-pointer" name="triggerMode" type="radio" value="select">
+                                    <span class="font-label-md text-label-md">Bôi đen đoạn văn</span>
+                                </div>
+                                <span class="material-symbols-outlined text-[16px] text-outline">drag_click</span>
+                            </label>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 3. INTERACTIVE PRACTICE PLAYGROUND -->
+                <section class="w-full bg-surface-container-low/95 rounded-xl p-space-md sm:p-space-xl shadow-2xl relative mb-space-xl">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm mb-space-lg">
+                        <div class="flex items-center gap-space-sm">
+                            <span class="w-3 h-3 rounded-full bg-tertiary animate-pulse"></span>
+                            <span class="font-label-lg text-label-lg text-tertiary-fixed uppercase tracking-wider font-bold">Khu vực thử nghiệm tương tác</span>
+                            <span class="hidden md:inline px-2 py-0.5 rounded bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm">Fenix Japanese Engine</span>
+                        </div>
+                        <span class="text-on-surface-variant font-label-sm text-label-sm">Rê chuột hoặc nhấp vào từ để thử tra cứu</span>
+                    </div>
+
+                    <!-- Mock Browser Surface with Article Snippet -->
+                    <div class="relative bg-surface-container-lowest rounded-xl p-space-lg sm:p-space-xl overflow-visible shadow-inner">
+                        <div class="flex items-center justify-between pb-space-md mb-space-lg border-b border-surface-variant/30 text-on-surface-variant font-label-sm text-label-sm">
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-error-container"></span>
+                                <span class="w-2.5 h-2.5 rounded-full bg-tertiary-container"></span>
+                                <span class="w-2.5 h-2.5 rounded-full bg-secondary-container"></span>
+                                <span class="ml-2 font-mono text-[11px] opacity-70">https://nhk.or.jp/news/easy/k1001438910/</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-[16px]">translate</span>
+                                <span>Bộ dò Fenix: Đang hoạt động</span>
+                            </div>
+                        </div>
+
+                        <!-- Japanese Reading Text Body with Interactive Hover Anchor -->
+                        <div class="text-xl sm:text-2xl leading-loose font-body-lg text-on-surface tracking-wide relative select-text" id="practiceTextContainer">
+                            <ruby class="practice-word cursor-pointer transition-colors duration-200 hover:text-tertiary-fixed px-1 rounded hover:bg-surface-container-high" data-word="sakura">桜<rt class="text-xs text-on-surface-variant select-none">さくら</rt></ruby>が
+
+                            <span class="relative inline-block mx-1" id="targetWordAnchor">
+                                <ruby class="practice-word bg-primary-container/80 text-tertiary-fixed px-2 py-0.5 rounded-md cursor-pointer shadow-[0_0_15px_rgba(246,219,192,0.25)] font-semibold inline-block" data-word="mankai">
+                                    満開
+                                    <rt class="text-xs text-tertiary-fixed-dim select-none font-normal">まんかい</rt>
+                                </ruby>
+
+                                <!-- LIVE SIMULATED HOVER LOOKUP POPUP -->
+                                <div class="absolute left-1/2 -translate-x-1/2 bottom-full mb-3 w-[340px] sm:w-[410px] bg-surface-container-high/95 backdrop-blur-2xl rounded-xl shadow-[0_12px_40px_rgba(22,9,27,0.85),0_0_20px_rgba(230,183,232,0.15)] p-space-md z-30 transition-all duration-300" id="fenixFloatingPopup">
+                                    <!-- Dynamic content inserted by JS -->
+                                </div>
+                            </span>
+
+                            の
+                            <ruby class="practice-word cursor-pointer transition-colors duration-200 hover:text-tertiary-fixed px-1 rounded hover:bg-surface-container-high" data-word="kisetsu">季節<rt class="text-xs text-on-surface-variant select-none">きせつ</rt></ruby>になりました。
+                            <ruby class="practice-word cursor-pointer transition-colors duration-200 hover:text-tertiary-fixed px-1 rounded hover:bg-surface-container-high" data-word="nihongo">日本語<rt class="text-xs text-on-surface-variant select-none">にほんご</rt></ruby>の
+                            <ruby class="practice-word cursor-pointer transition-colors duration-200 hover:text-tertiary-fixed px-1 rounded hover:bg-surface-container-high" data-word="benkyou">勉強<rt class="text-xs text-on-surface-variant select-none">べんきょう</rt></ruby>はとても
+                            <ruby class="practice-word cursor-pointer transition-colors duration-200 hover:text-tertiary-fixed px-1 rounded hover:bg-surface-container-high" data-word="omoshiroi">面白い<rt class="text-xs text-on-surface-variant select-none">おもしろい</rt></ruby>です。
+                        </div>
+                    </div>
+
+                    <div class="mt-space-md flex items-center justify-between flex-wrap gap-space-sm pt-space-xs text-on-surface-variant font-body-sm text-body-sm">
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-tertiary text-[18px]">lightbulb</span>
+                            <span>Gợi ý: Thử nhấp hoặc rê vào <strong>桜 (Anh Đào)</strong>, <strong>季節 (Mùa)</strong>, <strong>勉強 (Học tập)</strong> để xem thẻ Hán Việt biến chuyển tức thì.</span>
+                        </div>
+                        <div class="flex items-center gap-2 font-label-sm text-label-sm text-primary">
+                            <span class="material-symbols-outlined text-[16px]">touch_app</span>
+                            <span>Hỗ trợ trỏ phím tắt Shift</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 4. BOTTOM ACTION & LAUNCH BAR -->
+                <section class="flex flex-col sm:flex-row items-center justify-between gap-space-lg bg-surface-container-high/40 backdrop-blur-xl p-space-lg rounded-xl mb-space-xl">
+                    <div class="flex items-center gap-space-md">
+                        <div class="w-12 h-12 rounded-xl bg-primary-container text-tertiary-fixed flex items-center justify-center flex-shrink-0 shadow-inner">
+                            <span class="material-symbols-outlined text-[26px]">rocket_launch</span>
+                        </div>
+                        <div class="flex flex-col text-left">
+                            <span class="font-headline-sm text-headline-sm text-on-surface font-semibold">Tất cả cấu hình đã hoàn tất</span>
+                            <span class="font-body-sm text-body-sm text-on-surface-variant">Sẵn sàng mở rộng vốn từ tiếng Nhật và Hán tự mỗi ngày</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-space-md w-full sm:w-auto">
+                        <a class="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-space-lg py-3 rounded-xl bg-surface-container hover:bg-surface-bright text-on-surface font-label-lg text-label-lg transition-colors" href="/search.html" target="_blank">
+                            <span>Mở trang từ điển độc lập</span>
+                            <span class="material-symbols-outlined text-[18px]">open_in_new</span>
+                        </a>
+                        <button type="button" class="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-space-xl py-3 rounded-xl bg-gradient-to-r from-tertiary-fixed via-secondary to-primary-fixed text-on-tertiary-fixed font-label-lg text-label-lg font-bold shadow-[0_4px_25px_rgba(246,219,192,0.35)] hover:shadow-[0_4px_35px_rgba(246,219,192,0.55)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300" id="btnStartNow">
+                            <span>Bắt đầu sử dụng ngay</span>
+                            <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+                        </button>
+                    </div>
+                </section>
+
+                <!-- Sub-footer Meta Integrity Note -->
+                <div class="flex flex-col sm:flex-row items-center justify-between text-on-surface-variant/70 font-label-sm text-label-sm gap-2 pb-space-sm text-center sm:text-left">
+                    <span>Giấy phép mã nguồn mở GPL-3.0 • Fenix Language Ecosystem</span>
+                    <div class="flex items-center gap-3">
+                        <span class="flex items-center gap-1">
+                            <span class="material-symbols-outlined text-[14px]">lock</span>
+                            Không lưu giữ lịch sử duyệt web
+                        </span>
+                        <span>•</span>
+                        <span>Hỗ trợ Nhật - Việt, JLPT N5 - N1</span>
+                    </div>
+                </div>
+
+            </div>
         </div>
     </div>
-</div></div>
+</main>
 
-<div id="popup-menus"></div>
-
+<footer class="w-full bg-surface-container-lowest mt-space-xl py-space-xl">
+    <div class="max-w-7xl mx-auto px-margin flex flex-col md:flex-row items-center justify-between gap-space-lg">
+        <div class="flex items-center gap-space-md">
+            <img alt="FenixJpCatch Brand Logo" class="h-6 w-auto object-contain opacity-75" src="/images/icon48.png">
+            <div class="text-left">
+                <p class="font-headline-sm text-headline-sm text-tertiary-fixed-dim">FenixJpCatch Suite</p>
+                <p class="font-body-sm text-body-sm text-on-surface-variant">Hệ sinh thái tra cứu thông minh Nhật - Việt dành cho Chrome</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-space-lg text-on-surface-variant font-label-md text-label-md">
+            <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px] text-primary">verified</span> Phiên bản v2.4.0</span>
+            <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px] text-tertiary">translate</span> 180,000+ từ vựng</span>
+            <span class="text-on-surface-variant/60">© 2026 FenixJpCatch. Bản quyền kế thừa GPL-3.0.</span>
+        </div>
+    </div>
+</footer>
 
 </body>
 </html>
