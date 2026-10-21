@@ -372,7 +372,7 @@ export class Mecab {
             }
             this._remoteVersion = version;
             if (version !== this._version) {
-                throw new Error(`Unsupported MeCab native messenger version ${version}. Yomitan supports version ${this._version}.`);
+                throw new Error(`Unsupported MeCab native messenger version ${version}. FenixJpCatch supports version ${this._version}.`);
             }
         } catch (e) {
             if (this._port === port) {

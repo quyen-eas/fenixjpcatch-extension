@@ -114,7 +114,7 @@ export class Popup extends EventDispatcher {
         this._frameClient = null;
         /** @type {HTMLIFrameElement} */
         this._frame = document.createElement('iframe');
-        this._frame.className = 'yomitan-popup';
+        this._frame.className = 'fenix-popup yomitan-popup';
         this._frame.style.width = '0';
         this._frame.style.height = '0';
         /** @type {boolean} */

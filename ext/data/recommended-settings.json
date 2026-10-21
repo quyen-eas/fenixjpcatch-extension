@@ -42,7 +42,7 @@
                 "path": "parsing.enableScanningParser",
                 "value": false
             },
-            "description": "Turn off Yomitan's internal parser for languages with spaces."
+            "description": "Turn off internal parser for languages with spaces."
         }
     ],
     "da": [
@@ -68,7 +68,7 @@
                 "path": "parsing.enableScanningParser",
                 "value": false
             },
-            "description": "Turn off Yomitan's internal parser for languages with spaces."
+            "description": "Turn off internal parser for languages with spaces."
         }
     ],
     "de": [
@@ -94,7 +94,7 @@
                 "path": "parsing.enableScanningParser",
                 "value": false
             },
-            "description": "Turn off Yomitan's internal parser for languages with spaces."
+            "description": "Turn off internal parser for languages with spaces."
         }
     ],
     "el": [
@@ -120,7 +120,7 @@
                 "path": "parsing.enableScanningParser",
                 "value": false
             },
-            "description": "Turn off Yomitan's internal parser for languages with spaces."
+            "description": "Turn off internal parser for languages with spaces."
         },
         {
             "modification": {
@@ -154,7 +154,7 @@
                 "path": "parsing.enableScanningParser",
                 "value": false
             },
-            "description": "Turn off Yomitan's internal parser for languages with spaces."
+            "description": "Turn off internal parser for languages with spaces."
         },
         {
             "modification": {
@@ -223,7 +223,7 @@
                 "path": "parsing.enableScanningParser",
                 "value": false
             },
-            "description": "Turn off Yomitan's internal parser for languages with spaces."
+            "description": "Turn off internal parser for languages with spaces."
         }
     ],
     "es": [
@@ -249,7 +249,7 @@
                 "path": "parsing.enableScanningParser",
                 "value": false
             },
-            "description": "Turn off Yomitan's internal parser for languages with spaces."
+            "description": "Turn off internal parser for languages with spaces."
         }
     ],
     "et": [
@@ -285,7 +285,7 @@
                 "path": "parsing.enableScanningParser",
                 "value": false
             },
-            "description": "Turn off Yomitan's internal parser for languages with spaces."
+            "description": "Turn off internal parser for languages with spaces."
         }
     ],
     "fi": [
@@ -303,7 +303,7 @@
                 "path": "parsing.enableScanningParser",
                 "value": false
             },
-            "description": "Turn off Yomitan's internal parser for languages with spaces."
+            "description": "Turn off internal parser for languages with spaces."
         }
     ],
     "fr": [
@@ -360,7 +360,7 @@
                 "path": "parsing.enableScanningParser",
                 "value": false
             },
-            "description": "Turn off Yomitan's internal parser for languages with spaces."
+            "description": "Turn off internal parser for languages with spaces."
         }
     ],
     "he": [
@@ -386,7 +386,7 @@
                 "path": "parsing.enableScanningParser",
                 "value": false
             },
-            "description": "Turn off Yomitan's internal parser for languages with spaces."
+            "description": "Turn off internal parser for languages with spaces."
         }
     ],
     "hi": [
@@ -396,7 +396,7 @@
                 "path": "parsing.enableScanningParser",
                 "value": false
             },
-            "description": "Turn off Yomitan's internal parser for languages with spaces."
+            "description": "Turn off internal parser for languages with spaces."
         }
     ],
     "hu": [
@@ -414,7 +414,7 @@
                 "path": "parsing.enableScanningParser",
                 "value": false
             },
-            "description": "Turn off Yomitan's internal parser for languages with spaces."
+            "description": "Turn off internal parser for languages with spaces."
         }
     ],
     "id": [
@@ -432,7 +432,7 @@
                 "path": "parsing.enableScanningParser",
                 "value": false
             },
-            "description": "Turn off Yomitan's internal parser for languages with spaces."
+            "description": "Turn off internal parser for languages with spaces."
         }
     ],
     "it": [
@@ -458,7 +458,7 @@
                 "path": "parsing.enableScanningParser",
                 "value": false
             },
-            "description": "Turn off Yomitan's internal parser for languages with spaces."
+            "description": "Turn off internal parser for languages with spaces."
         }
     ],
     "ja": [
@@ -496,7 +496,7 @@
                 "path": "parsing.enableScanningParser",
                 "value": false
             },
-            "description": "Turn off Yomitan's internal parser for languages with spaces."
+            "description": "Turn off internal parser for languages with spaces."
         }
     ],
     "kn": [
@@ -506,7 +506,7 @@
                 "path": "parsing.enableScanningParser",
                 "value": false
             },
-            "description": "Turn off Yomitan's internal parser for languages with spaces."
+            "description": "Turn off internal parser for languages with spaces."
         }
     ],
     "la": [
@@ -516,7 +516,7 @@
                 "path": "parsing.enableScanningParser",
                 "value": false
             },
-            "description": "Turn off Yomitan's internal parser for languages with spaces."
+            "description": "Turn off internal parser for languages with spaces."
         }
     ],
     "lv": [
@@ -526,7 +526,7 @@
                 "path": "parsing.enableScanningParser",
                 "value": false
             },
-            "description": "Turn off Yomitan's internal parser for languages with spaces."
+            "description": "Turn off internal parser for languages with spaces."
         }
     ],
     "mn": [
@@ -544,7 +544,7 @@
                 "path": "parsing.enableScanningParser",
                 "value": false
             },
-            "description": "Turn off Yomitan's internal parser for languages with spaces."
+            "description": "Turn off internal parser for languages with spaces."
         }
     ],
     "nl": [
@@ -570,7 +570,7 @@
                 "path": "parsing.enableScanningParser",
                 "value": false
             },
-            "description": "Turn off Yomitan's internal parser for languages with spaces."
+            "description": "Turn off internal parser for languages with spaces."
         }
     ],
     "no": [
@@ -596,7 +596,7 @@
                 "path": "parsing.enableScanningParser",
                 "value": false
             },
-            "description": "Turn off Yomitan's internal parser for languages with spaces."
+            "description": "Turn off internal parser for languages with spaces."
         }
     ],
     "pl": [
@@ -622,7 +622,7 @@
                 "path": "parsing.enableScanningParser",
                 "value": false
             },
-            "description": "Turn off Yomitan's internal parser for languages with spaces."
+            "description": "Turn off internal parser for languages with spaces."
         }
     ],
     "pt": [
@@ -648,7 +648,7 @@
                 "path": "parsing.enableScanningParser",
                 "value": false
             },
-            "description": "Turn off Yomitan's internal parser for languages with spaces."
+            "description": "Turn off internal parser for languages with spaces."
         }
     ],
     "ro": [
@@ -674,7 +674,7 @@
                 "path": "parsing.enableScanningParser",
                 "value": false
             },
-            "description": "Turn off Yomitan's internal parser for languages with spaces."
+            "description": "Turn off internal parser for languages with spaces."
         }
     ],
     "ru": [
@@ -700,7 +700,7 @@
                 "path": "parsing.enableScanningParser",
                 "value": false
             },
-            "description": "Turn off Yomitan's internal parser for languages with spaces."
+            "description": "Turn off internal parser for languages with spaces."
         }
     ],
     "sga": [
@@ -710,7 +710,7 @@
                 "path": "parsing.enableScanningParser",
                 "value": false
             },
-            "description": "Turn off Yomitan's internal parser for languages with spaces."
+            "description": "Turn off internal parser for languages with spaces."
         }
     ],
     "sh": [
@@ -736,7 +736,7 @@
                 "path": "parsing.enableScanningParser",
                 "value": false
             },
-            "description": "Turn off Yomitan's internal parser for languages with spaces."
+            "description": "Turn off internal parser for languages with spaces."
         }
     ],
     "sq": [
@@ -762,7 +762,7 @@
                 "path": "parsing.enableScanningParser",
                 "value": false
             },
-            "description": "Turn off Yomitan's internal parser for languages with spaces."
+            "description": "Turn off internal parser for languages with spaces."
         }
     ],
     "sv": [
@@ -788,7 +788,7 @@
                 "path": "parsing.enableScanningParser",
                 "value": false
             },
-            "description": "Turn off Yomitan's internal parser for languages with spaces."
+            "description": "Turn off internal parser for languages with spaces."
         }
     ],
     "tr": [
@@ -806,7 +806,7 @@
                 "path": "parsing.enableScanningParser",
                 "value": false
             },
-            "description": "Turn off Yomitan's internal parser for languages with spaces."
+            "description": "Turn off internal parser for languages with spaces."
         }
     ],
     "uk": [
@@ -832,7 +832,7 @@
                 "path": "parsing.enableScanningParser",
                 "value": false
             },
-            "description": "Turn off Yomitan's internal parser for languages with spaces."
+            "description": "Turn off internal parser for languages with spaces."
         }
     ],
     "vi": [
