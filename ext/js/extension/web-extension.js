@@ -62,16 +62,43 @@ export class WebExtension extends EventDispatcher {
     }
 
     /**
+     * Checks if the extension context is still valid.
+     * @returns {boolean}
+     */
+    hasValidContext() {
+        return typeof chrome !== 'undefined' && typeof chrome.runtime?.id === 'string' && !this._unloaded;
+    }
+
+    /**
      * @param {unknown} message
      * @param {(response: unknown) => void} responseCallback
      * @throws {Error}
      */
     sendMessage(message, responseCallback) {
+        if (!this.hasValidContext()) {
+            this.triggerUnloaded();
+            return;
+        }
         try {
-            chrome.runtime.sendMessage(message, responseCallback);
+            const promise = chrome.runtime.sendMessage(message, (response) => {
+                const error = this.getLastError();
+                if (error !== null && this._isContextInvalidated(error)) {
+                    this.triggerUnloaded();
+                }
+                if (typeof responseCallback === 'function') {
+                    responseCallback(response);
+                }
+            });
+            if (promise !== null && typeof promise === 'object' && typeof promise.catch === 'function') {
+                promise.catch(() => {
+                    this.triggerUnloaded();
+                });
+            }
         } catch (error) {
             this.triggerUnloaded();
-            throw toError(error);
+            if (!this._isContextInvalidated(error)) {
+                throw toError(error);
+            }
         }
     }
 
@@ -80,6 +107,10 @@ export class WebExtension extends EventDispatcher {
      * @returns {Promise<unknown>}
      */
     sendMessagePromise(message) {
+        if (!this.hasValidContext()) {
+            this.triggerUnloaded();
+            return Promise.reject(new Error('Extension context invalidated'));
+        }
         return new Promise((resolve, reject) => {
             try {
                 this.sendMessage(message, (response) => {
@@ -110,13 +141,30 @@ export class WebExtension extends EventDispatcher {
      * @returns {?Error}
      */
     getLastError() {
-        const {lastError} = chrome.runtime;
-        if (lastError) {
-            if (lastError instanceof Error) { return lastError; }
-            const {message} = lastError;
-            return new Error(typeof message === 'string' ? message : 'An unknown web extension error occurred');
+        try {
+            const lastError = chrome.runtime?.lastError;
+            if (lastError) {
+                if (lastError instanceof Error) { return lastError; }
+                const {message} = lastError;
+                return new Error(typeof message === 'string' ? message : 'An unknown web extension error occurred');
+            }
+        } catch (error) {
+            this.triggerUnloaded();
+            return toError(error);
         }
         return null;
+    }
+
+    /**
+     * @param {unknown} error
+     * @returns {boolean}
+     */
+    _isContextInvalidated(error) {
+        if (typeof error === 'object' && error !== null && 'message' in error) {
+            const message = String(/** @type {{message: unknown}} */ (error).message);
+            return message.includes('Extension context invalidated');
+        }
+        return false;
     }
 
     /** */
