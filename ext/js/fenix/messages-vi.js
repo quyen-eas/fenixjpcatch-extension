@@ -98,7 +98,7 @@ export const MESSAGES_VI = Object.freeze({
     'links.yomitanSetup.title': 'Màn hình thiết lập gốc của Yomitan',
     'links.yomitanSetup.description': 'Bản tiếng Anh: nhập từ điển khác, chọn ngôn ngữ, tùy chỉnh chi tiết.',
     'links.settings.title': 'Cài đặt',
-    'links.settings.description': 'Toàn bộ tùy chọn của Yomitan (tiếng Anh).',
+    'links.settings.description': 'Toàn bộ tùy chọn nâng cao (tiếng Anh).',
     'links.about.title': 'Giới thiệu và ghi công',
     'links.about.description': 'Nguồn dữ liệu, giấy phép và mã nguồn.',
     'showGuide.label': 'Hiện trang chào mừng mỗi khi mở trình duyệt',
