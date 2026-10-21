@@ -50,7 +50,7 @@ class DisplayController {
         this._showExtensionInfo(manifest);
         void this._setupEnvironment();
         this._setupButtonEvents('.action-open-search', 'openSearchPage', chrome.runtime.getURL('/search.html'), this._onSearchClick.bind(this));
-        this._setupButtonEvents('.action-open-info', 'openInfoPage', chrome.runtime.getURL('/info.html'));
+        this._setupButtonEvents('.action-open-info', 'openInfoPage', chrome.runtime.getURL('/fenix-about.html'));
         applyTranslations(document);
         this._setupFenixLinks();
 
