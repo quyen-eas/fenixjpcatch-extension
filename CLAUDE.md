@@ -7,7 +7,7 @@ Technical notes for working in this repo. Language rules: code, comments, commit
 - Golden rule: **keep every Yomitan feature; only add**. Prefer new modules + existing extension points; minimize diff against upstream so `git merge upstream/master` stays cheap.
 - No secrets in this repo. Firebase web config is public; anything else goes through `.env.example`.
 
-> Status: Phase 2.1 completed (onboarding, dictionary release via dict-latest, action popup integration, public readiness). Next in this repo: Phase 3 (cloud/☆).
+> Status: Phase 2 (onboarding, dictionary release via `dict-latest`), Phase 2.2 (Stitch Violet Dusk UI redesign across hover popup, action popup, welcome, settings, and Yomitan cleanup), and Phase 3 (☆ save-word button, offline queue, cloud sync client, and `saved-words.html` dashboard) are completed and merged into `main`. Next in this repo: wire live Firebase project config / Google OAuth client ID and Phase 8 store preparation.
 
 ---
 
@@ -203,3 +203,15 @@ Code lives in `ext/js/fenix/` (sibling of the future `ext/js/cloud/`); entirely 
   - **How to reproduce:** in a unit test, wrap `importArchive` in `test/fenix/dictionary-installer.test.js` so that it first imports the same fixture archive through a second `DictionaryImporter` (the "Settings" import) and then calls the real importer; the second call returns `result: null` and the installer's cleanup deletes the first import. By hand this is practically not reproducible; the nearest approximation is to open the welcome page with the dictionaries missing and, in the same second, import `fenixjpcatch-ja-vi.zip` from Settings › Dictionaries › Import.
   - **Revisit when:** upstream's importer gets a database-level lock, or if we ever carry a patch to it anyway.
 - **Orphaned ownership mark (accepted, not fixed).** `install()` persists `importing[id]` _before_ the importer inserts its summary (reading and validating the archive in between takes seconds). If the welcome tab is killed in that window the mark survives without a row of ours. It stays harmless until a Settings import of the same title is running when the next welcome page opens: its unfinished summary is then taken for the abandoned onboarding import and deleted (same effect as the race above: the manual import has to be started again). Needs three coincidences (tab closed during the first install, a manual import of a title the setup would install anyway, and a welcome page opening mid-import). Fixing it properly means binding ownership to the actual row (impossible without a field the importer lets us set) or dropping automatic cleanup of leftovers in favour of an explicit "delete and retry" button; both are bigger than the problem. **How to reproduce:** in `test/fenix/dictionary-installer.test.js` call `install()` with an `importArchive` that never settles, leave the mark in the state, then import the same fixture archive as an unfinished summary (override `getDictionaryInfo` to report `importSuccess: false`) and run `installFirstRun`: the summary is deleted.
+
+## 9. Phase 2.2 & Phase 3 — Violet Dusk UI & Saved Words (implemented)
+
+- **Violet Dusk UI Redesign (Phase 2.2):**
+  - Hover popup & search page styling in `ext/css/fenix-theme.css` and `ext/css/popup-outer.css` (16px rounded outer iframe, glassmorphic borders, Crisp Ivory headwords, peach Hán Việt pill badges, frosted definition sub-cards).
+  - Welcome (`ext/fenix-welcome.html`, `ext/lib/fenix/welcome-ui.js`) and Settings (`ext/settings.html`, `ext/lib/fenix/settings-ui.js`, fallback at `ext/legacy-settings.html`) redesigned to Stitch Violet Dusk spec using precompiled `ext/css/fenix-stitch.css` and locally bundled `ext/fonts/MaterialSymbolsOutlined.woff2` (100% offline & MV3 CSP-compliant).
+  - Redundant upstream Yomitan branding and non-essential UI toggles hidden/cleaned up (PR #19–#21).
+- **Saved Words & Cloud Sync (Phase 3):**
+  - Entry header ☆ button wired via `DisplaySavedWords` (`ext/js/display/display-saved-words.js`) in both `popup-main.js` and `search-main.js`, capturing context sentence (`display.history.state`), `jmdictSeq` (from `FenixJpCatch JA-VI`), `hanViet`, and `meaningVi`.
+  - Cloud sync client (`ext/js/cloud/cloud-api.js`, `ext/js/cloud/cloud-controller.js`) and offline retry queue (`ext/js/cloud/offline-queue.js`, persisted in `chrome.storage.local`), following the shared callable spec in `docs/api.md`.
+  - Saved Words Dashboard (`ext/saved-words.html`, `ext/css/saved-words.css`, `ext/js/pages/saved-words-main.js`) with search, JLPT/SRS filters, audio playback, and JSON/Anki TSV export.
+  - Unit tests in `test/fenix/cloud.test.js`.
