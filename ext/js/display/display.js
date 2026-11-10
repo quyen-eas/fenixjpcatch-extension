@@ -1381,7 +1381,7 @@ export class Display extends EventDispatcher {
     async _setContentTermsOrKanji(type, urlSearchParams, token) {
         const lookup = (urlSearchParams.get('lookup') !== 'false');
         const wildcardsEnabled = (urlSearchParams.get('wildcards') !== 'off');
-        const hasEnabledDictionaries = this._options ? this._options.dictionaries.some(({enabled}) => enabled) : false;
+        let hasEnabledDictionaries = this._options ? this._options.dictionaries.some(({enabled}) => enabled) : false;
 
         // Set query
         safePerformance.mark('display:setQuery:start');
@@ -1453,6 +1453,16 @@ export class Display extends EventDispatcher {
         if (this._options === null) {
             await this.updateOptions();
             if (this._setContentToken !== token) { return; }
+        }
+
+        hasEnabledDictionaries = this._options ? this._options.dictionaries.some(({enabled}) => enabled) : false;
+        if (hasEnabledDictionaries && lookup && query.length > 0 && Array.isArray(dictionaryEntries) && dictionaryEntries.length === 0) {
+            safePerformance.mark('display:findDictionaryEntries:retry:start');
+            dictionaryEntries = await this._findDictionaryEntries(type === 'kanji', query, primaryReading, wildcardsEnabled, optionsContext);
+            safePerformance.mark('display:findDictionaryEntries:retry:end');
+            safePerformance.measure('display:findDictionaryEntries:retry', 'display:findDictionaryEntries:retry:start', 'display:findDictionaryEntries:retry:end');
+            if (this._setContentToken !== token) { return; }
+            content.dictionaryEntries = dictionaryEntries;
         }
 
         if (changeHistory) {
