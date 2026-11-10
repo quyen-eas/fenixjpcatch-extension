@@ -34,6 +34,9 @@ import {OptionsUtil} from '../data/options-util.js';
 import {getAllPermissions, hasPermissions, hasRequiredPermissionsForOptions} from '../data/permissions-util.js';
 import {DictionaryDatabase} from '../dictionary/dictionary-database.js';
 import {Environment} from '../extension/environment.js';
+import {FENIX_DICTIONARIES} from '../fenix/dictionary-release.js';
+import {getInsertionIndex, isFenixDictionarySummaryHealthy} from '../fenix/onboarding-settings.js';
+import {OnboardingStateStore} from '../fenix/onboarding-state.js';
 import {CacheMap} from '../general/cache-map.js';
 import {ObjectPropertyAccessor} from '../general/object-property-accessor.js';
 import {distributeFuriganaInflected, isCodePointJapanese, convertKatakanaToHiragana as jpConvertKatakanaToHiragana} from '../language/ja/japanese.js';
@@ -331,12 +334,14 @@ export class Backend {
             this._defaultAnkiFieldTemplates = (await fetchText('/data/templates/default-anki-field-templates.handlebars')).trim();
             this._options = await this._optionsUtil.load();
 
+            const needsFenixWelcome = await this._healFenixDictionariesOnStartup();
+
             this._applyOptions('background');
 
             this._attachOmniboxListener();
 
             const options = this._getProfileOptions({current: true}, false);
-            if (options.general.showGuide) {
+            if (options.general.showGuide || needsFenixWelcome) {
                 void this._openWelcomeGuidePageOnce();
             }
 
@@ -2848,6 +2853,75 @@ export class Backend {
             textReplacements.unshift(null);
         }
         return textReplacements;
+    }
+
+    /**
+     * Ensures bundled FenixJpCatch dictionaries already present in IndexedDB are enabled in the current profile
+     * with `FenixJpCatch JA-VI` as the main dictionary, and returns true if any bundled dictionary is missing
+     * from IndexedDB so the welcome installer tab can be opened.
+     * @returns {Promise<boolean>}
+     */
+    async _healFenixDictionariesOnStartup() {
+        if (navigator.webdriver || this._options === null) { return false; }
+        try {
+            const dictionaryInfos = await this._dictionaryDatabase.getDictionaryInfo();
+            const currentIndex = this._options.profileCurrent;
+            const currentProfile = this._options.profiles[currentIndex];
+            if (typeof currentProfile === 'undefined') { return false; }
+
+            let optionsModified = false;
+            let missingFromDb = false;
+            const stateStore = new OnboardingStateStore();
+
+            for (const spec of FENIX_DICTIONARIES) {
+                const info = dictionaryInfos.find(({title}) => title === spec.title);
+                const healthy = isFenixDictionarySummaryHealthy(info, spec);
+                if (!healthy) {
+                    missingFromDb = true;
+                    await stateStore.update((s) => {
+                        delete s.dictionaries[spec.id];
+                        if (typeof info !== 'undefined') {
+                            s.importing[spec.id] = true;
+                        }
+                    });
+                    continue;
+                }
+
+                const {dictionaries, general} = currentProfile.options;
+                const names = dictionaries.map(({name}) => name);
+                const existingIndex = names.indexOf(spec.title);
+                if (existingIndex < 0) {
+                    const insertAt = getInsertionIndex(names, spec);
+                    dictionaries.splice(insertAt, 0, {
+                        name: spec.title,
+                        alias: spec.title,
+                        enabled: true,
+                        allowSecondarySearches: false,
+                        definitionsCollapsible: 'not-collapsible',
+                        partsOfSpeechFilter: true,
+                        useDeinflections: true,
+                        styles: info?.styles ?? '',
+                    });
+                    optionsModified = true;
+                } else if (!dictionaries[existingIndex].enabled) {
+                    dictionaries[existingIndex].enabled = true;
+                    optionsModified = true;
+                }
+
+                if (spec.kind === 'term' && (general.mainDictionary === '' || general.mainDictionary === 'FenixJpCatch Kanji-VI')) {
+                    general.mainDictionary = spec.title;
+                    optionsModified = true;
+                }
+            }
+
+            if (optionsModified) {
+                await this._optionsUtil.save(this._options);
+            }
+            return missingFromDb;
+        } catch (e) {
+            log.warn(e);
+            return false;
+        }
     }
 
     /**

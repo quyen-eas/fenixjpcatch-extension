@@ -17,8 +17,16 @@
  */
 
 import {Application} from '../application.js';
+import {ExtensionError} from '../core/extension-error.js';
+import {DictionaryWorker} from '../dictionary/dictionary-worker.js';
 import {DocumentFocusController} from '../dom/document-focus-controller.js';
+import {readArchiveTitle} from '../fenix/archive-index.js';
+import {downloadWithProgress, FenixInstallError} from '../fenix/dictionary-downloader.js';
+import {FenixDictionaryInstaller} from '../fenix/dictionary-installer.js';
+import {reconcileFenixStateBeforeInstall} from '../fenix/onboarding-settings.js';
+import {OnboardingStateStore} from '../fenix/onboarding-state.js';
 import {HotkeyHandler} from '../input/hotkey-handler.js';
+import {DictionaryController} from '../pages/settings/dictionary-controller.js';
 import {ModalController} from '../pages/settings/modal-controller.js';
 import {SettingsController} from '../pages/settings/settings-controller.js';
 import {SettingsDisplayController} from '../pages/settings/settings-display-controller.js';
@@ -74,4 +82,86 @@ await Application.main(true, async (application) => {
     display.initializeState();
 
     document.documentElement.dataset.loaded = 'true';
+
+    if (!navigator.webdriver) {
+        /**
+         * @param {import('settings-modifications').Modification[]} targets
+         * @returns {Promise<Error[]>}
+         */
+        const modifyGlobalSettings = async (targets) => {
+            const results = await settingsController.modifyGlobalSettings(targets);
+            return results.flatMap(({error}) => (typeof error === 'undefined' ? [] : [ExtensionError.deserialize(error)]));
+        };
+        const state = new OnboardingStateStore();
+        const installer = new FenixDictionaryInstaller({
+            download: async (url, onProgress) => {
+                const fileName = url.split('/').pop();
+                if (typeof fileName === 'string' && fileName.endsWith('.zip')) {
+                    try {
+                        return await downloadWithProgress(`/data/dictionaries/${fileName}`, onProgress);
+                    } catch {
+                        // Fall back to remote release URL
+                    }
+                }
+                return await downloadWithProgress(url, onProgress);
+            },
+            importArchive: async (archive, onProgress) => {
+                const optionsFull = await settingsController.getOptionsFull();
+                const importDetails = {
+                    prefixWildcardsSupported: optionsFull.global.database.prefixWildcardsSupported,
+                    yomitanVersion: chrome.runtime.getManifest().version,
+                };
+                try {
+                    return await new DictionaryWorker().importDictionary(archive, importDetails, onProgress);
+                } catch (e) {
+                    throw new FenixInstallError('import', e instanceof Error ? e.message : String(e), e);
+                }
+            },
+            getDictionaryInfo: () => settingsController.getDictionaryInfo(),
+            getOptionsFull: () => settingsController.getOptionsFull(),
+            getProfileIndex: () => settingsController.profileIndex,
+            modifyGlobalSettings,
+            readArchiveTitle,
+            deleteDictionary: async (title) => { await new DictionaryWorker().deleteDictionary(title, null); },
+            notifyDatabaseUpdated: () => application.api.triggerDatabaseUpdated('dictionary', 'import'),
+            state,
+            createDictionarySettings: (name, enabled, styles) => DictionaryController.createDefaultDictionarySettings(name, enabled, styles ?? ''),
+        });
+        let didInstall = false;
+        const runInstall = async () => {
+            const [dictionaryInfos, optionsFull] = await Promise.all([
+                settingsController.getDictionaryInfo(),
+                settingsController.getOptionsFull(),
+            ]);
+            const needsWork = await reconcileFenixStateBeforeInstall({
+                dictionaryInfos,
+                optionsFull,
+                state,
+                deleteDictionary: async (title) => { await new DictionaryWorker().deleteDictionary(title, null); },
+            });
+            if (!needsWork) { return; }
+            didInstall = true;
+            const noDictText = document.querySelector('#no-dictionaries .entry p');
+            if (noDictText !== null) {
+                noDictText.textContent = 'Đang tự động nạp bộ từ điển Nhật - Việt mặc định (vui lòng đợi vài giây)...';
+            }
+            const prevention = settingsController.preventPageExit();
+            try {
+                await installer.installFirstRun(({spec, phase, loaded = 0, total = 0}) => {
+                    if (noDictText === null) { return; }
+                    const pct = total > 0 ? Math.min(100, Math.floor((loaded / total) * 100)) : 0;
+                    if (phase === 'downloading' || phase === 'importing') {
+                        noDictText.textContent = `Đang tự động nạp bộ từ điển ${spec.title} (${pct}%)...`;
+                    }
+                });
+            } finally {
+                prevention.end();
+            }
+        };
+        await (typeof navigator.locks !== 'undefined' ? navigator.locks.request('fenix-dictionary-install', runInstall) : runInstall());
+        if (didInstall) {
+            await display.updateOptions();
+            display.initializeState();
+        }
+    }
 });

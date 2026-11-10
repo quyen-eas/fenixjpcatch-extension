@@ -15,3 +15,4 @@ ext/manifest.json
 
 ext/lib/*
 !ext/lib/fenix/
+ext/data/dictionaries/

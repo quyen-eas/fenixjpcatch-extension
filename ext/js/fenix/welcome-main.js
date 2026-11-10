@@ -28,6 +28,7 @@ import {SettingsController} from '../pages/settings/settings-controller.js';
 import {readArchiveTitle} from './archive-index.js';
 import {downloadWithProgress, FenixInstallError} from './dictionary-downloader.js';
 import {FenixDictionaryInstaller} from './dictionary-installer.js';
+import {reconcileFenixStateBeforeInstall} from './onboarding-settings.js';
 import {OnboardingStateStore} from './onboarding-state.js';
 import {WelcomeController} from './welcome-controller.js';
 
@@ -75,7 +76,17 @@ await Application.main(true, async (application) => {
 
     const state = new OnboardingStateStore();
     const installer = new FenixDictionaryInstaller({
-        download: (url, onProgress) => downloadWithProgress(url, onProgress),
+        download: async (url, onProgress) => {
+            const fileName = url.split('/').pop();
+            if (!navigator.webdriver && typeof fileName === 'string' && fileName.endsWith('.zip')) {
+                try {
+                    return await downloadWithProgress(`/data/dictionaries/${fileName}`, onProgress);
+                } catch {
+                    // Fall back to remote release URL when local archive is not bundled
+                }
+            }
+            return await downloadWithProgress(url, onProgress);
+        },
         importArchive: async (archive, onProgress) => {
             const optionsFull = await settingsController.getOptionsFull();
             const importDetails = {
@@ -114,10 +125,28 @@ await Application.main(true, async (application) => {
     await genericSettingController.prepare();
     await genericSettingController.refresh();
 
-    const recommendedPermissionsController = new RecommendedPermissionsController(settingsController);
-    await recommendedPermissionsController.prepare();
+    if (
+        document.querySelector('#recommended-permissions-toggle') !== null &&
+        document.querySelector('#optional-permissions-toggle') !== null
+    ) {
+        const recommendedPermissionsController = new RecommendedPermissionsController(settingsController);
+        await recommendedPermissionsController.prepare();
+    }
 
     document.documentElement.dataset.loaded = 'true';
+
+    if (!navigator.webdriver) {
+        const [dictionaryInfos, optionsFull] = await Promise.all([
+            settingsController.getDictionaryInfo(),
+            settingsController.getOptionsFull(),
+        ]);
+        await reconcileFenixStateBeforeInstall({
+            dictionaryInfos,
+            optionsFull,
+            state,
+            deleteDictionary: async (title) => { await new DictionaryWorker().deleteDictionary(title, null); },
+        });
+    }
 
     await welcomeController.run();
 });

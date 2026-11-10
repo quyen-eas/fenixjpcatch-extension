@@ -276,17 +276,58 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    // Observe hidden WelcomeController status to mirror live dictionary installation progress on Step 2 card
+    const dictStatusBadge = document.getElementById('welcome-dict-status');
+    const hiddenList = document.getElementById('fenix-dictionary-list');
+    const syncDictInstallProgress = () => {
+        if (!dictStatusBadge || !hiddenList) { return; }
+        const rows = [...hiddenList.querySelectorAll('.fenix-dictionary-row')];
+        if (rows.length === 0) { return; }
+        const installedCount = rows.filter((r) => r.dataset.phase === 'installed').length;
+        const activeRow = rows.find((r) => r.dataset.phase === 'downloading' || r.dataset.phase === 'importing');
+        const errorRow = rows.find((r) => r.dataset.phase === 'error');
+        if (installedCount === rows.length) {
+            dictStatusBadge.textContent = '100% Sẵn sàng';
+            dictStatusBadge.className = 'font-label-sm text-label-sm text-emerald-400 font-semibold';
+        } else if (activeRow) {
+            const statusText = activeRow.querySelector('.fenix-dictionary-status')?.textContent || 'Đang cài đặt...';
+            dictStatusBadge.textContent = `${statusText} (${installedCount}/${rows.length})`;
+            dictStatusBadge.className = 'font-label-sm text-label-sm text-amber-300 font-semibold animate-pulse';
+        } else if (errorRow) {
+            dictStatusBadge.textContent = 'Lỗi cài đặt (nhấn Thử lại)';
+            dictStatusBadge.className = 'font-label-sm text-label-sm text-rose-400 font-semibold cursor-pointer underline';
+            dictStatusBadge.onclick = () => { errorRow.querySelector('.fenix-dictionary-action')?.click(); };
+        }
+    };
+    if (hiddenList && typeof MutationObserver !== 'undefined') {
+        const observer = new MutationObserver(syncDictInstallProgress);
+        observer.observe(hiddenList, {childList: true, subtree: true, attributes: true, characterData: true});
+    }
+
     // Start Now Button
     const startBtn = document.getElementById('btnStartNow');
     if (startBtn) {
         startBtn.addEventListener('click', () => {
+            if (document.documentElement.dataset.fenixSetup === 'running') {
+                startBtn.innerHTML = `
+                    <span class="material-symbols-outlined animate-spin text-[20px]">sync</span>
+                    <span>Đang hoàn tất nạp từ điển...</span>
+                `;
+                const waitDone = setInterval(() => {
+                    if (document.documentElement.dataset.fenixSetup !== 'running') {
+                        clearInterval(waitDone);
+                        window.location.href = '/search.html';
+                    }
+                }, 400);
+                return;
+            }
             startBtn.innerHTML = `
                 <span class="material-symbols-outlined animate-spin text-[20px]">sync</span>
                 <span>Khởi tạo thành công!</span>
             `;
             setTimeout(() => {
                 window.location.href = '/search.html';
-            }, 800);
+            }, 600);
         });
     }
 });

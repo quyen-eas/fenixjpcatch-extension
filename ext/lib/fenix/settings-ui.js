@@ -23,7 +23,120 @@ const defaultSettings = {
     dictKanji: true
 };
 
+import {Application} from '../../js/application.js';
+import {ExtensionError} from '../../js/core/extension-error.js';
+import {DictionaryWorker} from '../../js/dictionary/dictionary-worker.js';
+import {readArchiveTitle} from '../../js/fenix/archive-index.js';
+import {downloadWithProgress, FenixInstallError} from '../../js/fenix/dictionary-downloader.js';
+import {FenixDictionaryInstaller} from '../../js/fenix/dictionary-installer.js';
+import {reconcileFenixStateBeforeInstall} from '../../js/fenix/onboarding-settings.js';
+import {OnboardingStateStore} from '../../js/fenix/onboarding-state.js';
+import {DictionaryController} from '../../js/pages/settings/dictionary-controller.js';
+import {SettingsController} from '../../js/pages/settings/settings-controller.js';
+
 let currentSettings = {...defaultSettings};
+let appInstance = null;
+let settingsControllerInstance = null;
+let dictInstallerInstance = null;
+
+async function initBackendAndEnsureDictionaries() {
+    const badge = document.getElementById('active-dict-badge');
+    try {
+        await Application.main(true, async (application) => {
+            appInstance = application;
+            const settingsController = new SettingsController(application);
+            await settingsController.prepare();
+            settingsControllerInstance = settingsController;
+
+            const modifyGlobalSettings = async (targets) => {
+                const results = await settingsController.modifyGlobalSettings(targets);
+                return results.flatMap(({error}) => (typeof error === 'undefined' ? [] : [ExtensionError.deserialize(error)]));
+            };
+
+            const state = new OnboardingStateStore();
+            const installer = new FenixDictionaryInstaller({
+                download: async (url, onProgress) => {
+                    const fileName = url.split('/').pop();
+                    if (typeof fileName === 'string' && fileName.endsWith('.zip')) {
+                        try {
+                            return await downloadWithProgress(`/data/dictionaries/${fileName}`, onProgress);
+                        } catch {
+                            // Fall back to remote release URL
+                        }
+                    }
+                    return await downloadWithProgress(url, onProgress);
+                },
+                importArchive: async (archive, onProgress) => {
+                    const optionsFull = await settingsController.getOptionsFull();
+                    const importDetails = {
+                        prefixWildcardsSupported: optionsFull.global.database.prefixWildcardsSupported,
+                        yomitanVersion: chrome.runtime.getManifest().version,
+                    };
+                    try {
+                        return await new DictionaryWorker().importDictionary(archive, importDetails, onProgress);
+                    } catch (e) {
+                        throw new FenixInstallError('import', e instanceof Error ? e.message : String(e), e);
+                    }
+                },
+                getDictionaryInfo: () => settingsController.getDictionaryInfo(),
+                getOptionsFull: () => settingsController.getOptionsFull(),
+                getProfileIndex: () => settingsController.profileIndex,
+                modifyGlobalSettings,
+                readArchiveTitle,
+                deleteDictionary: async (title) => { await new DictionaryWorker().deleteDictionary(title, null); },
+                notifyDatabaseUpdated: () => application.api.triggerDatabaseUpdated('dictionary', 'import'),
+                state,
+                createDictionarySettings: (name, enabled, styles) => DictionaryController.createDefaultDictionarySettings(name, enabled, styles ?? ''),
+            });
+            dictInstallerInstance = installer;
+
+            const runInstall = async () => {
+                const [dictionaryInfos, optionsFull] = await Promise.all([
+                    settingsController.getDictionaryInfo(),
+                    settingsController.getOptionsFull(),
+                ]);
+                const needsWork = await reconcileFenixStateBeforeInstall({
+                    dictionaryInfos,
+                    optionsFull,
+                    state,
+                    deleteDictionary: async (title) => { await new DictionaryWorker().deleteDictionary(title, null); },
+                });
+                const installedMap = await installer.getInstalled();
+                const missingAny = [...installedMap.values()].some((v) => !v);
+                if (!needsWork && !missingAny) { return; }
+
+                if (badge) {
+                    badge.textContent = 'Đang nạp từ điển mặc định...';
+                }
+                const prevention = settingsController.preventPageExit();
+                try {
+                    await installer.installFirstRun(({spec, phase, loaded = 0, total = 0}) => {
+                        if (!badge) { return; }
+                        const pct = total > 0 ? Math.min(100, Math.floor((loaded / total) * 100)) : 0;
+                        if (phase === 'downloading' || phase === 'importing') {
+                            badge.textContent = `Đang nạp ${spec.title} (${pct}%)...`;
+                        }
+                    });
+                } finally {
+                    prevention.end();
+                }
+            };
+            if (typeof navigator.locks !== 'undefined') {
+                await navigator.locks.request('fenix-dictionary-install', runInstall);
+            } else {
+                await runInstall();
+            }
+
+            const dictInfos = await settingsController.getDictionaryInfo();
+            if (badge) {
+                badge.textContent = `${dictInfos.length} Bộ Đang Kích Hoạt`;
+            }
+            await updateStorageEstimate();
+        });
+    } catch (e) {
+        console.warn('Settings backend init warning:', e);
+    }
+}
 
 function showAutoSaveNotification() {
     const dot = document.getElementById('auto-save-dot');
@@ -232,6 +345,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadSettings();
     applySettingsToUI();
     await updateStorageEstimate();
+    void initBackendAndEnsureDictionaries();
 
     // 1. Activation Key selector
     document.querySelectorAll('.key-btn').forEach(btn => {
@@ -409,7 +523,40 @@ document.addEventListener('DOMContentLoaded', async () => {
         fileInput.addEventListener('change', () => {
             if (fileInput.files && fileInput.files.length > 0) {
                 const file = fileInput.files[0];
-                alert(`Đang chuẩn bị nạp từ điển: ${file.name}. Bạn có thể xem chi tiết trong Cài đặt Nâng cao.`);
+                if (settingsControllerInstance && appInstance) {
+                    const badge = document.getElementById('active-dict-badge');
+                    if (badge) { badge.textContent = `Đang nạp ${file.name}...`; }
+                    void (async () => {
+                        try {
+                            const archive = await file.arrayBuffer();
+                            const optionsFull = await settingsControllerInstance.getOptionsFull();
+                            const importDetails = {
+                                prefixWildcardsSupported: optionsFull.global.database.prefixWildcardsSupported,
+                                yomitanVersion: chrome.runtime.getManifest().version,
+                            };
+                            const {result} = await new DictionaryWorker().importDictionary(archive, importDetails, null);
+                            if (result && result.title) {
+                                const dictEntry = DictionaryController.createDefaultDictionarySettings(result.title, true, result.styles || '');
+                                await settingsControllerInstance.modifyProfileSettings([{
+                                    action: 'splice',
+                                    path: 'dictionaries',
+                                    start: optionsFull.profiles[optionsFull.profileCurrent].options.dictionaries.length,
+                                    deleteCount: 0,
+                                    items: [dictEntry],
+                                }]);
+                                await appInstance.api.triggerDatabaseUpdated('dictionary', 'import');
+                            }
+                            const dictInfos = await settingsControllerInstance.getDictionaryInfo();
+                            if (badge) { badge.textContent = `${dictInfos.length} Bộ Đang Kích Hoạt`; }
+                            await updateStorageEstimate();
+                            showAutoSaveNotification();
+                        } catch (err) {
+                            alert(`Không thể nạp từ điển ${file.name}: ${err instanceof Error ? err.message : String(err)}`);
+                        }
+                    })();
+                } else {
+                    alert(`Đang chuẩn bị nạp từ điển: ${file.name}.`);
+                }
             }
         });
     }

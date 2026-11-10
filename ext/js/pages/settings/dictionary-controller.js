@@ -860,7 +860,8 @@ export class DictionaryController {
                 }
             }
 
-            for (const {title, styles} of missingDictionaries) {
+            for (const {title, styles, importSuccess} of missingDictionaries) {
+                if (importSuccess === false) { continue; }
                 const value = DictionaryController.createDefaultDictionarySettings(title, newDictionariesEnabled, styles);
                 dictionaryOptionsArray.push(value);
                 modified = true;

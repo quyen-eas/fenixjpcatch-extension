@@ -356,6 +356,7 @@ export class Popup extends EventDispatcher {
      * @param {string} css The CSS rules.
      */
     async setCustomCss(css) {
+        if (!this._frameConnected) { return; }
         await this._invokeSafe('displaySetCustomCss', {css});
     }
 
@@ -772,7 +773,9 @@ export class Popup extends EventDispatcher {
         if (this._visibleValue === value) { return; }
         this._visibleValue = value;
         this._frame.style.setProperty('visibility', value ? 'visible' : 'hidden', 'important');
-        void this._invokeSafe('displayVisibilityChanged', {value});
+        if (this._frameConnected) {
+            void this._invokeSafe('displayVisibilityChanged', {value});
+        }
     }
 
     /**

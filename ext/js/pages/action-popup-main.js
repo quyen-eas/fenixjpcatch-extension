@@ -365,7 +365,7 @@ class DisplayController {
 
         if (enabledCount === 0) {
             for (let i = 0; i < tooltip.length; i++) {
-                tooltip[i].innerHTML = 'No dictionary enabled';
+                tooltip[i].innerHTML = '<a href="/fenix-welcome.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">Chưa cài bộ từ điển — Nhấn để nạp tự động</a>';
                 tooltip[i].classList.add('enable-dictionary-tooltip');
             }
         }

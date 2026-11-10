@@ -67,7 +67,8 @@ export function buildDictionaryModifications(optionsFull, summary, spec, current
     for (let i = 0; i < profiles.length; ++i) {
         const {dictionaries, general} = profiles[i].options;
         const names = dictionaries.map(({name}) => name);
-        if (!names.includes(title)) {
+        const existingIndex = names.indexOf(title);
+        if (existingIndex < 0) {
             targets.push({
                 action: 'splice',
                 path: `profiles[${i}].options.dictionaries`,
@@ -75,13 +76,73 @@ export function buildDictionaryModifications(optionsFull, summary, spec, current
                 deleteCount: 0,
                 items: [createDictionarySettings(title, i === currentProfileIndex, styles)],
             });
+        } else if (sequenced && i === currentProfileIndex && !dictionaries[existingIndex].enabled) {
+            targets.push({
+                action: 'set',
+                path: `profiles[${i}].options.dictionaries[${existingIndex}].enabled`,
+                value: true,
+            });
         }
-        // Same rule as a regular import: the first sequenced dictionary becomes the "main" one used for merging.
-        if (sequenced && general.mainDictionary === '') {
+        // Same rule as a regular import: the first sequenced term dictionary becomes the "main" one used for merging.
+        if (sequenced && spec.kind === 'term' && (general.mainDictionary === '' || general.mainDictionary === 'FenixJpCatch Kanji-VI')) {
             targets.push({action: 'set', path: `profiles[${i}].options.general.mainDictionary`, value: title});
         }
     }
     return targets;
+}
+
+/**
+ * @param {import('dictionary-importer').Summary|undefined} info
+ * @param {import('./dictionary-release.js').FenixDictionarySpec} spec
+ * @returns {boolean}
+ */
+export function isFenixDictionarySummaryHealthy(info, spec) {
+    if (typeof info === 'undefined' || info.importSuccess === false) { return false; }
+    const total = spec.kind === 'term' ? (info.counts?.terms?.total ?? 1) : (info.counts?.kanji?.total ?? 1);
+    return total > 0;
+}
+
+/**
+ * Cleans up broken partial Fenix imports and resets stale onboarding state flags so `installFirstRun` can
+ * install missing dictionaries and re-register disabled ones.
+ * @param {object} details
+ * @param {import('dictionary-importer').Summary[]} details.dictionaryInfos
+ * @param {import('settings').Options} details.optionsFull
+ * @param {import('./onboarding-state.js').OnboardingStateStore} details.state
+ * @param {(title: string) => Promise<void>} details.deleteDictionary
+ * @returns {Promise<boolean>} True if any dictionary needs installation or registration.
+ */
+export async function reconcileFenixStateBeforeInstall({dictionaryInfos, optionsFull, state, deleteDictionary}) {
+    let needsWork = false;
+    const currentProfile = optionsFull.profiles[optionsFull.profileCurrent];
+    const profileDictionaries = currentProfile?.options.dictionaries ?? [];
+    const mainDictionary = currentProfile?.options.general.mainDictionary ?? '';
+
+    for (const spec of FENIX_DICTIONARIES) {
+        const info = dictionaryInfos.find(({title}) => title === spec.title);
+        const healthy = isFenixDictionarySummaryHealthy(info, spec);
+        if (typeof info !== 'undefined' && !healthy) {
+            try {
+                await deleteDictionary(spec.title);
+            } catch {
+                // Ignore cleanup failure; installer will report if still blocked
+            }
+        }
+        const entry = profileDictionaries.find(({name}) => name === spec.title);
+        const properlyConfigured = (
+            typeof entry !== 'undefined' &&
+            entry.enabled &&
+            (spec.kind !== 'term' || (mainDictionary !== '' && mainDictionary !== 'FenixJpCatch Kanji-VI'))
+        );
+        if (!healthy || !properlyConfigured) {
+            needsWork = true;
+            await state.update((s) => {
+                delete s.dictionaries[spec.id];
+                delete s.importing[spec.id];
+            });
+        }
+    }
+    return needsWork;
 }
 
 /**

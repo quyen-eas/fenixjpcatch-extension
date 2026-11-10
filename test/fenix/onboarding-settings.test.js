@@ -96,6 +96,18 @@ describe('buildDictionaryModifications', () => {
         const targets = buildDictionaryModifications(options, {title: TERM.title, sequenced: false}, TERM, 0, createDictionarySettings);
         expect(targets).toStrictEqual([]);
     });
+
+    test('never sets a kanji dictionary as mainDictionary and heals a disabled or Kanji-hijacked profile when registering the term dictionary', async () => {
+        const {options} = await createOptions();
+        applyModifications(options, buildDictionaryModifications(options, {title: KANJI.title, sequenced: true}, KANJI, 0, createDictionarySettings));
+        expect(options.profiles[0].options.general.mainDictionary).toBe('');
+
+        options.profiles[0].options.general.mainDictionary = KANJI.title;
+        options.profiles[0].options.dictionaries.unshift(createDictionarySettings(TERM.title, false));
+        applyModifications(options, buildDictionaryModifications(options, {title: TERM.title, sequenced: true}, TERM, 0, createDictionarySettings));
+        expect(options.profiles[0].options.dictionaries[0].enabled).toBe(true);
+        expect(options.profiles[0].options.general.mainDictionary).toBe(TERM.title);
+    });
 });
 
 describe('pickJapaneseVoice', () => {
