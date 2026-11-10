@@ -113,6 +113,17 @@ export class DisplaySavedWords {
         const reading = headword.reading;
 
         if (button.dataset.saved === 'true') {
+            delete button.dataset.saved;
+            button.title = 'Lưu từ vào sổ từ';
+            const iconUnsave = button.querySelector('.action-icon');
+            if (iconUnsave !== null && iconUnsave instanceof HTMLElement) {
+                iconUnsave.dataset.icon = 'star';
+            }
+            try {
+                await this._cloudController.deleteSavedWord('', expression, reading);
+            } catch {
+                // Ignore delete error
+            }
             return;
         }
 

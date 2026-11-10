@@ -117,9 +117,8 @@
     border-radius: 8px;
 }
 
-/* Query parser in popup */
-:root #query-parser-container,
-:root[data-page-type=popup] #query-parser-container {
+/* Query parser in popup - hidden in hover popup to keep card layout identical to promo */
+:root #query-parser-container {
     background-color: var(--fenix-card-bg);
     border: 1px solid var(--fenix-hairline-border);
     border-radius: 10px;
@@ -127,147 +126,315 @@
     margin: 8px 10px;
 }
 
-/* Entry card container styling */
+:root[data-page-type=popup] #query-parser-container {
+    display: none !important;
+}
+
+/* Entry card container styling (matches #fenixFloatingPopup promotional card) */
 :root .entry,
 :root[data-page-type=popup] .entry {
-    background-color: var(--fenix-card-bg);
-    border: 1px solid var(--fenix-hairline-border);
-    border-radius: 14px;
-    margin: 8px 10px 12px;
-    padding: 12px 14px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    background: linear-gradient(180deg, #2b1b30 0%, #221427 100%);
+    border: 1px solid rgba(246, 219, 192, 0.22);
+    border-radius: 16px;
+    margin: 6px 8px 10px;
+    padding: 14px 16px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
 }
 
 :root .entry:hover,
 :root[data-page-type=popup] .entry:hover {
-    border-color: rgba(246, 219, 192, 0.28);
-    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5), 0 0 12px rgba(113, 52, 85, 0.25);
+    border-color: rgba(246, 219, 192, 0.34);
+    box-shadow: 0 14px 36px rgba(0, 0, 0, 0.65), 0 0 14px rgba(113, 52, 85, 0.28);
 }
 
 :root .entry+.entry,
 :root[data-page-type=popup] .entry+.entry {
-    border-top: 1px solid var(--fenix-hairline-border);
     margin-top: 10px;
 }
 
-:root .entry-header,
-:root[data-page-type=popup] .entry-header {
-    border-bottom: 1px solid rgba(216, 180, 200, 0.1);
-    padding-bottom: 8px;
-    margin-bottom: 8px;
+/* Hide legacy current-entry dot & sidebar indicators inside card */
+:root .entry-current-indicator,
+:root .entry-current-indicator-icon,
+:root .headword-current-indicator,
+:root[data-page-type=popup] .entry-current-indicator,
+:root[data-page-type=popup] .entry-current-indicator-icon,
+:root[data-page-type=popup] .headword-current-indicator {
+    display: none !important;
 }
 
-/* Headword & Furigana */
+/* Header section: Top Row (Kanji + [Reading] + [HÁN VIỆT] + Audio/Star buttons) + Meta Badge Row */
+:root .entry-header,
+:root[data-page-type=popup] .entry-header {
+    border-bottom: 1px solid rgba(216, 180, 200, 0.14);
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+    display: block;
+    position: relative;
+}
+
+/* Primary Headword Line */
+:root .headword-list,
+:root[data-page-type=popup] .headword-list {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 6px;
+    padding-right: 76px;
+}
+
+/* Show only primary headword in popup card for clean promotional layout */
+:root[data-page-type=popup] .headword:not([data-index="0"]) {
+    display: none !important;
+}
+
+:root .headword,
+:root[data-page-type=popup] .headword {
+    display: inline-flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+:root .headword-text-container,
+:root[data-page-type=popup] .headword-text-container {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
 :root .headword-term,
 :root[data-page-type=popup] .headword-term {
-    color: var(--fenix-ivory-text);
-    font-weight: bold;
-    letter-spacing: -0.01em;
-    font-size: 1.5rem;
-    line-height: 1.2;
+    color: var(--fenix-ivory-text) !important;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    font-size: 1.55rem;
+    line-height: 1.15;
+}
+
+:root .headword-term a.headword-kanji-link,
+:root[data-page-type=popup] .headword-term a.headword-kanji-link {
+    color: inherit !important;
+    text-decoration: none !important;
+    border-bottom: none !important;
+}
+
+:root .headword-term a.headword-kanji-link:hover,
+:root[data-page-type=popup] .headword-term a.headword-kanji-link:hover {
+    color: var(--fenix-peach-highlight) !important;
+}
+
+/* Hide ruby furigana above headword when bracketed [reading] is displayed next to it */
+:root .headword[data-reading-is-same=false] .headword-term ruby>rt,
+:root[data-page-type=popup] .headword[data-reading-is-same=false] .headword-term ruby>rt {
+    display: none !important;
+}
+
+/* Always show [reading] in brackets next to headword when reading differs from term */
+:root .headword[data-reading-is-same=false] .headword-reading-outer,
+:root[data-term-display-mode=ruby] .headword[data-reading-is-same=false] .headword-reading-outer,
+:root[data-page-type=popup] .headword[data-reading-is-same=false] .headword-reading-outer {
+    display: inline-flex !important;
+    align-items: baseline;
+}
+
+:root .headword[data-reading-is-same=true] .headword-reading-outer,
+:root[data-page-type=popup] .headword[data-reading-is-same=true] .headword-reading-outer {
+    display: none !important;
 }
 
 :root .headword-reading,
 :root[data-page-type=popup] .headword-reading {
-    color: var(--fenix-peach-highlight);
-    font-weight: normal;
+    color: #d0c3cc !important;
+    font-size: 0.95rem;
+    font-weight: 500;
 }
 
-:root ruby>rt,
-:root[data-page-type=popup] ruby>rt {
+:root .headword-reading::before,
+:root[data-page-type=popup] .headword-reading::before {
+    content: '[' !important;
+    color: #b5a4b0;
+}
+
+:root .headword-reading::after,
+:root[data-page-type=popup] .headword-reading::after {
+    content: ']' !important;
+    color: #b5a4b0;
+}
+
+/* Solid Warm Peach Hán Việt Pill in Header (e.g. MÃN KHAI) */
+:root .fenix-header-han-viet:not([hidden]),
+:root[data-page-type=popup] .fenix-header-han-viet:not([hidden]) {
+    display: inline-flex !important;
+    align-items: center;
+    background-color: #f6dbc0;
+    color: #2b1500;
+    font-weight: 800;
+    font-size: 0.75rem;
+    line-height: 1.2;
+    padding: 3px 8px;
+    border-radius: 6px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+
+/* Hide duplicate headword-details audio button and old tag rows */
+:root .headword-details,
+:root .headword-list-details,
+:root .entry-body-section[data-section-type=pronunciations],
+:root .entry-body-section[data-section-type=frequencies],
+:root .definition-tag-list,
+:root[data-page-type=popup] .headword-details,
+:root[data-page-type=popup] .headword-list-details,
+:root[data-page-type=popup] .entry-body-section[data-section-type=pronunciations],
+:root[data-page-type=popup] .entry-body-section[data-section-type=frequencies],
+:root[data-page-type=popup] .definition-tag-list {
+    display: none !important;
+}
+
+/* Second Header Row: Metadata Badges (JLPT N3 | Phổ biến ★★★ | •|• Âm điệu [0] | Danh từ) */
+:root .fenix-entry-meta-row:not([hidden]),
+:root[data-page-type=popup] .fenix-entry-meta-row:not([hidden]) {
+    display: flex !important;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+:root .fenix-badge,
+:root[data-page-type=popup] .fenix-badge {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.72rem;
+    line-height: 1.25;
+    padding: 3px 8px;
+    border-radius: 6px;
+    white-space: nowrap;
+}
+
+:root .fenix-badge-jlpt,
+:root[data-page-type=popup] .fenix-badge-jlpt {
+    background-color: #6b2f50;
+    color: #ffafd5;
+    border: 1px solid rgba(255, 175, 213, 0.25);
+    font-weight: 700;
+}
+
+:root .fenix-badge-popular,
+:root[data-page-type=popup] .fenix-badge-popular {
+    background-color: #38283c;
+    color: #d8cad5;
+    border: 1px solid rgba(216, 180, 200, 0.14);
+    font-weight: 500;
+}
+
+:root .fenix-badge-pitch,
+:root[data-page-type=popup] .fenix-badge-pitch {
+    background-color: #1f1123;
+    color: #f6dbc0;
+    border: 1px solid rgba(246, 219, 192, 0.16);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-weight: 600;
+}
+
+:root .fenix-badge-pos,
+:root[data-page-type=popup] .fenix-badge-pos {
+    background-color: rgba(80, 45, 85, 0.55);
     color: #e6b7e8;
-    font-size: 0.55em;
-    font-weight: normal;
+    border: 1px solid rgba(230, 183, 232, 0.18);
+    font-weight: 500;
 }
 
-/* Sino-Vietnamese (Hán Việt) Highlights */
+/* Sino-Vietnamese (Hán Việt) fallback pills */
 :root [data-sc-content=han-viet],
 :root .fenix-han-viet,
 :root .tag[data-category=han-viet],
 :root[data-page-type=popup] [data-sc-content=han-viet],
 :root[data-page-type=popup] .fenix-han-viet,
 :root[data-page-type=popup] .tag[data-category=han-viet] {
-    background-color: var(--fenix-peach-container);
-    color: #f9dec3;
-    border: 1px solid var(--fenix-peach-border);
-    border-radius: 9999px;
-    font-weight: bold;
+    background-color: #f6dbc0;
+    color: #2b1500;
+    border-radius: 6px;
+    font-weight: 800;
     font-size: 0.72rem;
-    padding: 0.15em 0.65em;
-    letter-spacing: 0.04em;
+    padding: 2px 8px;
+    letter-spacing: 0.03em;
     text-transform: uppercase;
     display: inline-block;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
-    vertical-align: middle;
 }
 
-/* Sense tags & grammar badges */
-:root .tag,
-:root[data-page-type=popup] .tag {
-    background-color: var(--fenix-primary-plum);
-    color: var(--fenix-plum-text);
-    border: 1px solid rgba(147, 80, 115, 0.35);
-    border-radius: 6px;
-    font-size: 0.75rem;
-    padding: 0.2em 0.55em;
-    font-weight: 500;
-    margin: 2px;
+/* Numbered Definitions List (1, 2... in circular badge + clean Vietnamese meaning) */
+:root .definition-list,
+:root[data-page-type=popup] .definition-list {
+    list-style: none !important;
+    padding-left: 0 !important;
+    margin: 0 !important;
+    counter-reset: fenix-def-counter;
 }
 
-:root .tag[data-category=partOfSpeech],
-:root[data-page-type=popup] .tag[data-category=partOfSpeech] {
-    background-color: var(--fenix-secondary-mauve);
-    color: var(--fenix-ivory-text);
-    border-color: rgba(240, 161, 199, 0.25);
-}
-
-:root .tag[data-category=frequency],
-:root .tag[data-category=popular],
-:root .tag[data-category=jlpt],
-:root[data-page-type=popup] .tag[data-category=frequency],
-:root[data-page-type=popup] .tag[data-category=popular],
-:root[data-page-type=popup] .tag[data-category=jlpt] {
-    background-color: var(--fenix-peach-container);
-    color: #f9dec3;
-    border-color: var(--fenix-peach-border);
-    font-weight: bold;
-}
-
-:root .tag[data-category=dictionary],
-:root[data-page-type=popup] .tag[data-category=dictionary] {
-    background-color: var(--fenix-card-elevated);
-    color: #e6b7e8;
-    border-color: rgba(230, 183, 232, 0.2);
-}
-
-/* Definitions container and sub-cards */
 :root .definition-item,
 :root[data-page-type=popup] .definition-item {
-    margin-bottom: 8px;
+    list-style: none !important;
+    margin-bottom: 6px;
+}
+
+:root .definition-item:last-child,
+:root[data-page-type=popup] .definition-item:last-child {
+    margin-bottom: 0;
 }
 
 :root .definition-item-inner,
 :root[data-page-type=popup] .definition-item-inner {
-    background-color: rgba(52, 37, 56, 0.45);
-    border: 1px solid rgba(216, 180, 200, 0.08);
-    border-radius: 10px;
-    padding: 8px 12px;
-    transition: background-color 0.15s ease, border-color 0.15s ease;
+    display: flex !important;
+    align-items: flex-start;
+    gap: 10px;
+    background: transparent !important;
+    border: none !important;
+    padding: 2px 0 !important;
 }
 
-:root .definition-item-inner:hover,
-:root[data-page-type=popup] .definition-item-inner:hover {
-    background-color: rgba(52, 37, 56, 0.65);
-    border-color: rgba(216, 180, 200, 0.16);
+:root .definition-item-inner::before,
+:root[data-page-type=popup] .definition-item-inner::before {
+    counter-increment: fenix-def-counter;
+    content: counter(fenix-def-counter);
+    width: 20px;
+    height: 20px;
+    border-radius: 9999px;
+    background-color: rgba(230, 183, 232, 0.18);
+    color: #e6b7e8;
+    font-size: 0.75rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+:root .definition-item-content,
+:root[data-page-type=popup] .definition-item-content {
+    flex: 1;
+    min-width: 0;
+}
+
+:root .gloss-list,
+:root[data-page-type=popup] .gloss-list {
+    list-style: none !important;
+    padding-left: 0 !important;
+    margin: 0 !important;
 }
 
 /* Vietnamese definitions (Primary) */
 :root .gloss-item,
 :root[data-page-type=popup] .gloss-item {
     color: var(--fenix-ivory-text);
-    line-height: 1.55;
-    font-size: 0.95rem;
+    line-height: 1.5;
+    font-size: 0.92rem;
+    list-style: none !important;
 }
 
 :root [data-sc-content=vi],
@@ -279,57 +446,126 @@
 /* English definitions (Secondary Fallback) */
 :root [data-sc-content=en],
 :root[data-page-type=popup] [data-sc-content=en] {
-    color: #d8b4c8;
-    font-style: italic;
-    opacity: 0.92;
+    color: #d0c3cc;
+    font-size: 0.85rem;
+    opacity: 0.9;
+    margin-top: 2px;
 }
 
-/* Context & Example Sentences */
-:root [data-sc-content=example],
-:root [data-sc-content=example-sentence],
-:root[data-page-type=popup] [data-sc-content=example],
-:root[data-page-type=popup] [data-sc-content=example-sentence] {
-    background-color: var(--fenix-card-surface);
-    border-left: 3px solid var(--fenix-secondary-mauve);
-    border-radius: 0 8px 8px 0;
-    padding: 0.45em 0.7em;
-    margin: 0.45em 0;
+:root [data-sc-content=en][data-sc-only=true],
+:root[data-page-type=popup] [data-sc-content=en][data-sc-only=true] {
+    color: var(--fenix-ivory-text);
+    font-size: 0.92rem;
+    font-style: normal;
+    font-weight: 500;
+    opacity: 1;
 }
 
-/* Pitch Accent notation */
-:root .pronunciation-graph,
-:root[data-page-type=popup] .pronunciation-graph {
-    color: var(--fenix-peach-highlight);
+/* In-Depth Kanji Breakdown Box ("Phân tích Hán tự chuyên sâu:") */
+:root .fenix-kanji-breakdown:not([hidden]),
+:root[data-page-type=popup] .fenix-kanji-breakdown:not([hidden]) {
+    display: block !important;
+    background-color: rgba(19, 8, 23, 0.84);
+    border: 1px solid rgba(216, 180, 200, 0.1);
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-top: 10px;
+    font-size: 0.8rem;
+    line-height: 1.55;
+    color: #d0c3cc;
 }
 
-:root .pronunciation-downstep-notation,
-:root[data-page-type=popup] .pronunciation-downstep-notation {
-    color: var(--fenix-accent-pink);
+:root .fenix-kanji-breakdown-title,
+:root[data-page-type=popup] .fenix-kanji-breakdown-title {
+    color: #f6dbc0;
+    font-weight: 700;
 }
 
-/* Action Buttons (Audio, Bookmark, Menu) */
+:root .fenix-kanji-breakdown-body,
+:root[data-page-type=popup] .fenix-kanji-breakdown-body {
+    color: #d8cad4;
+}
+
+/* Context / Example Sentence Footer at Bottom of Card */
+:root .fenix-context-sentence:not([hidden]),
+:root[data-page-type=popup] .fenix-context-sentence:not([hidden]) {
+    display: block !important;
+    margin-top: 10px;
+    padding-top: 9px;
+    border-top: 1px solid rgba(216, 180, 200, 0.14);
+    font-size: 0.8rem;
+    line-height: 1.5;
+}
+
+:root .fenix-context-sentence-ja,
+:root[data-page-type=popup] .fenix-context-sentence-ja {
+    color: #f3dbf5;
+    font-weight: 500;
+}
+
+:root .fenix-context-highlight,
+:root[data-page-type=popup] .fenix-context-highlight {
+    color: #f6dbc0;
+    font-weight: 700;
+    text-decoration: underline;
+    text-decoration-color: rgba(246, 219, 192, 0.45);
+    text-underline-offset: 3px;
+}
+
+:root .fenix-context-sentence-vi,
+:root[data-page-type=popup] .fenix-context-sentence-vi {
+    color: #b8a8b4;
+    font-size: 0.76rem;
+    margin-top: 2px;
+}
+
+/* Top-Right Action Buttons (Speaker 🔊 on Left, Star ☆ on Right, Horizontal Row) */
 :root .actions,
 :root[data-page-type=popup] .actions {
-    display: flex;
-    flex-flow: row nowrap;
+    position: absolute;
+    top: 0;
+    right: 0;
+    display: flex !important;
+    flex-direction: row !important;
     align-items: center;
-    gap: 4px;
-    float: right;
-    margin: -2px 0 0;
+    gap: 6px;
+    float: none !important;
+    margin: 0 !important;
+}
+
+:root .action-button-container,
+:root[data-page-type=popup] .action-button-container {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Always show top-right audio button even in merge mode; hide kebab menu in popup */
+:root .actions .action-button[data-action=play-audio],
+:root[data-result-output-mode=merge] .actions .action-button[data-action=play-audio],
+:root[data-page-type=popup] .actions .action-button[data-action=play-audio] {
+    display: inline-flex !important;
+}
+
+:root .actions .action-button[data-action=menu],
+:root[data-page-type=popup] .actions .action-button[data-action=menu] {
+    display: none !important;
 }
 
 :root .action-button,
 :root[data-page-type=popup] .action-button {
-    width: 30px;
-    height: 30px;
-    background-color: var(--fenix-card-elevated);
+    width: 32px;
+    height: 32px;
+    background-color: rgba(58, 42, 61, 0.9);
     border-radius: 8px;
-    color: var(--fenix-peach-highlight);
-    border: 1px solid rgba(216, 180, 200, 0.18);
+    color: #f3dbf5;
+    border: 1px solid rgba(216, 180, 200, 0.16);
     display: inline-flex;
     align-items: center;
     justify-content: center;
     padding: 0;
+    cursor: pointer;
     transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
 }
 
@@ -338,29 +574,19 @@
     background-color: var(--fenix-primary-plum);
     border-color: rgba(246, 219, 192, 0.45);
     color: var(--fenix-ivory-text);
-    transform: scale(1.06);
+    transform: scale(1.05);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
 }
 
 :root .action-button:active,
 :root[data-page-type=popup] .action-button:active {
-    transform: scale(0.92);
+    transform: scale(0.94);
 }
 
 :root .action-button .action-icon,
 :root[data-page-type=popup] .action-button .action-icon {
-    width: 18px;
-    height: 18px;
-}
-
-:root .action-button:not([data-action=save-word]) .action-icon:not(.color-icon),
-:root[data-page-type=popup] .action-button:not([data-action=save-word]) .action-icon:not(.color-icon) {
-    background-color: var(--fenix-peach-highlight);
-}
-
-:root .action-button:not([data-action=save-word]):hover .action-icon:not(.color-icon),
-:root[data-page-type=popup] .action-button:not([data-action=save-word]):hover .action-icon:not(.color-icon) {
-    background-color: #ffffff;
+    width: 17px;
+    height: 17px;
 }
 
 /* Play Audio Button */
@@ -368,16 +594,16 @@
 :root[data-page-type=popup] .action-button[data-action=play-audio] .action-icon {
     -webkit-mask-image: url('/images/speaker.svg');
     mask-image: url('/images/speaker.svg');
-    -webkit-mask-size: 18px 18px;
-    mask-size: 18px 18px;
+    -webkit-mask-size: 17px 17px;
+    mask-size: 17px 17px;
     -webkit-mask-repeat: no-repeat;
     mask-repeat: no-repeat;
     -webkit-mask-position: center;
     mask-position: center;
     background-image: none;
-    background-color: var(--fenix-peach-highlight);
-    width: 18px;
-    height: 18px;
+    background-color: #f3dbf5;
+    width: 17px;
+    height: 17px;
 }
 
 :root .action-button[data-action=play-audio]:hover .action-icon,
@@ -385,26 +611,26 @@
     background-color: #ffffff;
 }
 
-/* Saved word star bookmark button styling (Unsaved ☆) */
+/* Saved word star bookmark button styling (Unsaved ☆ - matches promotional rose/plum star button) */
 :root .action-button[data-action=save-word],
 :root[data-page-type=popup] .action-button[data-action=save-word] {
-    background-color: rgba(248, 175, 142, 0.1);
-    border: 1px solid rgba(248, 175, 142, 0.42);
+    background-color: rgba(113, 52, 85, 0.45);
+    border: 1px solid rgba(255, 175, 213, 0.28);
     border-radius: 8px;
 }
 
 :root .action-button[data-action=save-word] .action-icon,
 :root[data-page-type=popup] .action-button[data-action=save-word] .action-icon {
-    background-color: var(--fenix-accent-peach);
+    background-color: #ffafd5;
     transition: background-color 0.15s ease, transform 0.15s ease;
 }
 
 :root .action-button[data-action=save-word]:hover,
 :root[data-page-type=popup] .action-button[data-action=save-word]:hover {
-    background-color: rgba(248, 175, 142, 0.22);
-    border-color: var(--fenix-accent-peach);
-    box-shadow: 0 0 10px rgba(248, 175, 142, 0.35);
-    transform: scale(1.08);
+    background-color: rgba(113, 52, 85, 0.75);
+    border-color: #ffafd5;
+    box-shadow: 0 0 10px rgba(255, 175, 213, 0.3);
+    transform: scale(1.06);
 }
 
 :root .action-button[data-action=save-word]:hover .action-icon,
@@ -412,25 +638,24 @@
     background-color: #ffffff;
 }
 
-/* Saved word star bookmark button styling (Saved ★) */
+/* Saved word star bookmark button styling (Saved ★ - warm gold/peach active state) */
 :root .action-button[data-action=save-word][data-saved=true],
 :root[data-page-type=popup] .action-button[data-action=save-word][data-saved=true] {
-    background: linear-gradient(135deg, #f8af8e 0%, #e69d7a 100%);
+    background: linear-gradient(135deg, #f6dbc0 0%, #f8af8e 100%);
     border: 1px solid #ffe2d5;
-    box-shadow: 0 0 12px rgba(248, 175, 142, 0.55), 0 2px 4px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 0 12px rgba(248, 175, 142, 0.5), 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 :root .action-button[data-action=save-word][data-saved=true] .action-icon,
 :root[data-page-type=popup] .action-button[data-action=save-word][data-saved=true] .action-icon {
-    background-color: #2b0b2e;
+    background-color: #2b1500;
 }
 
 :root .action-button[data-action=save-word][data-saved=true]:hover,
 :root[data-page-type=popup] .action-button[data-action=save-word][data-saved=true]:hover {
-    background: linear-gradient(135deg, #ffc4a8 0%, #f0a887 100%);
+    background: linear-gradient(135deg, #ffe5cc 0%, #ffc4a8 100%);
     border-color: #ffffff;
-    box-shadow: 0 0 16px rgba(248, 175, 142, 0.75), 0 2px 6px rgba(0, 0, 0, 0.35);
-    transform: scale(1.08);
+    transform: scale(1.06);
 }
 
 :root .action-button[data-action=save-word][data-saved=true]:hover .action-icon,

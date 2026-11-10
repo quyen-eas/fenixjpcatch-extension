@@ -7,12 +7,12 @@
         <div class="actions">
             <div class="note-actions-container"></div>
             <div class="action-button-container">
-                <button type="button" class="action-button" data-action="save-word" title="Lưu từ vào sổ từ" data-title-default="Lưu từ vào sổ từ" data-menu-position="left below h-cover v-cover">
-                    <span class="action-icon icon" data-icon="star"></span>
-                </button>
-                <button type="button" class="action-button" data-action="play-audio" title="Play audio" data-title-default="Play audio" data-hotkey='["playAudio",["title","data-title-default"],"Play audio ({0})"]' data-menu-position="left below h-cover v-cover">
+                <button type="button" class="action-button" data-action="play-audio" title="Phát âm thanh" data-title-default="Phát âm thanh" data-hotkey='["playAudio",["title","data-title-default"],"Phát âm thanh ({0})"]' data-menu-position="left below h-cover v-cover">
                     <span class="action-icon icon color-icon" data-icon="play-audio"></span>
                     <span class="action-button-badge icon" hidden></span>
+                </button>
+                <button type="button" class="action-button" data-action="save-word" title="Lưu từ vào sổ từ" data-title-default="Lưu từ vào sổ từ" data-menu-position="left below h-cover v-cover">
+                    <span class="action-icon icon" data-icon="star"></span>
                 </button>
                 <button type="button" class="action-button action-button-collapsible" data-action="menu" data-menu-position="left below h-cover v-cover">
                     <span class="action-icon icon" data-icon="kebab-menu"></span>
@@ -23,6 +23,7 @@
             </span>
         </div>
         <div class="headword-list"></div>
+        <div class="fenix-entry-meta-row" hidden></div>
         <div class="headword-list-details">
             <div class="headword-list-tag-list tag-list"></div>
             <ul class="inflection-rule-chains"></ul>
@@ -38,6 +39,8 @@
         <div class="entry-body-section" data-section-type="definitions">
             <ol class="entry-body-section-content definition-list"></ol>
         </div>
+        <div class="fenix-kanji-breakdown" hidden></div>
+        <div class="fenix-context-sentence" hidden></div>
     </div>
 </div></template>
 <template id="headword-template" data-remove-whitespace-text="true"><div class="headword">
@@ -49,6 +52,7 @@
         <span class="headword-reading-outer">
             <span class="headword-reading"></span>
         </span>
+        <span class="fenix-header-han-viet" hidden></span>
     </div>
     <div class="headword-details">
         <button type="button" class="action-button" data-action="play-audio" title="Play audio" data-title-default="Play audio" data-hotkey='["playAudio",["title","data-title-default"],"Play audio ({0})"]' data-menu-position="right below h-cover v-cover">
@@ -128,20 +132,20 @@
         <table class="kanji-glyph-table">
             <tbody>
                 <tr>
-                    <th scope="col" class="kanji-meaning-header">Meaning</th>
-                    <th scope="col" class="kanji-readings-header">Readings</th>
-                    <th scope="col" class="kanji-statistics-header">Statistics</th>
+                    <th scope="col" class="kanji-meaning-header">Nghĩa Hán - Việt</th>
+                    <th scope="col" class="kanji-readings-header">Cách đọc On / Kun</th>
+                    <th scope="col" class="kanji-statistics-header">Thông số</th>
                 </tr>
                 <tr>
                     <td class="kanji-gloss-container"></td>
                     <td class="kanji-readings"></td>
                     <td class="kanji-statistics"></td>
                 </tr>
-                <tr><th scope="col" colspan="3" class="kanji-classifications-header">Classifications</th></tr>
+                <tr><th scope="col" colspan="3" class="kanji-classifications-header">Phân loại &amp; Âm Hán Việt</th></tr>
                 <tr><td colspan="3" class="kanji-classifications"></td></tr>
-                <tr><th scope="col" colspan="3" class="kanji-codepoints-header">Codepoints</th></tr>
+                <tr><th scope="col" colspan="3" class="kanji-codepoints-header">Mã chữ (Codepoints)</th></tr>
                 <tr><td colspan="3" class="kanji-codepoints"></td></tr>
-                <tr><th scope="col" colspan="3" class="kanji-dictionary-indices-header">Dictionary Indices</th></tr>
+                <tr><th scope="col" colspan="3" class="kanji-dictionary-indices-header">Chỉ mục từ điển</th></tr>
                 <tr><td colspan="3" class="kanji-dictionary-indices"></td></tr>
             </tbody>
         </table>

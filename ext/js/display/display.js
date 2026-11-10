@@ -33,6 +33,7 @@ import {querySelectorNotNull} from '../dom/query-selector.js';
 import {ScrollElement} from '../dom/scroll-element.js';
 import {TextSourceGenerator} from '../dom/text-source-generator.js';
 import {HotkeyHelpController} from '../input/hotkey-help-controller.js';
+import {isCodePointKanji} from '../language/ja/japanese.js';
 import {TextScanner} from '../language/text-scanner.js';
 import {checkPopupPreviewURL} from '../pages/settings/popup-preview-controller.js';
 import {DisplayContentManager} from './display-content-manager.js';
@@ -1471,6 +1472,46 @@ export class Display extends EventDispatcher {
         const container = this._container;
         container.textContent = '';
 
+        /** @type {Map<string, import('dictionary').KanjiDictionaryEntry>} */
+        const kanjiEntriesMap = new Map();
+        if (type === 'terms' && hasEnabledDictionaries && dictionaryEntries.length > 0) {
+            /** @type {string[]} */
+            const uniqueKanjiChars = [];
+            for (let entryIdx = 0, maxIdx = Math.min(dictionaryEntries.length, 5); entryIdx < maxIdx; ++entryIdx) {
+                const dictEntry = dictionaryEntries[entryIdx];
+                if (dictEntry.type !== 'term' || !Array.isArray(dictEntry.headwords) || dictEntry.headwords.length === 0) { continue; }
+                for (const ch of dictEntry.headwords[0].term) {
+                    const cp = ch.codePointAt(0);
+                    if (typeof cp === 'number' && isCodePointKanji(cp) && !uniqueKanjiChars.includes(ch)) {
+                        uniqueKanjiChars.push(ch);
+                    }
+                }
+            }
+            if (uniqueKanjiChars.length > 0) {
+                try {
+                    const kanjiEntries = await this._application.api.kanjiFind(uniqueKanjiChars.join(''), optionsContext);
+                    if (this._setContentToken !== token) { return; }
+                    if (Array.isArray(kanjiEntries)) {
+                        for (const ke of kanjiEntries) {
+                            if (ke && typeof ke.character === 'string' && !kanjiEntriesMap.has(ke.character)) {
+                                kanjiEntriesMap.set(ke.character, ke);
+                            }
+                        }
+                    }
+                } catch {
+                    // Ignore kanji lookup failures in minimal environments or unit tests
+                }
+            }
+        }
+
+        /** @type {?string} */
+        let contextSentence = null;
+        if (typeof state.sentence === 'object' && state.sentence !== null && typeof state.sentence.text === 'string') {
+            contextSentence = state.sentence.text;
+        } else if (typeof this._fullQuery === 'string' && this._fullQuery.length > query.length) {
+            contextSentence = this._fullQuery;
+        }
+
         safePerformance.mark('display:contentUpdate:start');
         this._triggerContentUpdateStart();
 
@@ -1490,6 +1531,9 @@ export class Display extends EventDispatcher {
                 this._displayGenerator.createTermEntry(dictionaryEntry, this._dictionaryInfo) :
                 this._displayGenerator.createKanjiEntry(dictionaryEntry, this._dictionaryInfo)
             );
+            if (dictionaryEntry.type === 'term') {
+                this._displayGenerator.enrichTermEntryWithKanji(entry, dictionaryEntry, kanjiEntriesMap, i === 0 ? contextSentence : null);
+            }
             entry.dataset.index = `${i}`;
             this._dictionaryEntryNodes.push(entry);
             this._addEntryEventListeners(entry);

@@ -25,6 +25,98 @@ import {getLanguageFromText} from '../language/text-utilities.js';
 import {PronunciationGenerator} from './pronunciation-generator.js';
 import {StructuredContentGenerator} from './structured-content-generator.js';
 
+/** @type {Readonly<Record<string, string>>} */
+const FENIX_POS_LABELS_VI = Object.freeze({
+    'n': 'Danh từ',
+    'vs': 'Động từ する',
+    'vi': 'Tự động từ',
+    'vt': 'Tha động từ',
+    'adj-i': 'Tính từ -い',
+    'adj-na': 'Tính từ -な',
+    'adj-no': 'Danh từ の',
+    'adj-pn': 'ịnh từ',
+    'adj-t': 'Tính từ -たる',
+    'adv': 'Trạng từ',
+    'adv-to': 'Trạng từ と',
+    'exp': 'Cụm từ',
+    'pn': 'Đại từ',
+    'prt': 'Trợ từ',
+    'conj': 'Liên từ',
+    'int': 'Thán từ',
+    'suf': 'Hậu tố',
+    'pref': 'Tiền tố',
+    'ctr': 'Lượng từ',
+    'v1': 'Động từ nhóm 2',
+    'vk': 'Động từ 来る',
+    'v5u': 'Động từ nhóm 1',
+    'v5k': 'Động từ nhóm 1',
+    'v5g': 'Động từ nhóm 1',
+    'v5s': 'Động từ nhóm 1',
+    'v5t': 'Động từ nhóm 1',
+    'v5n': 'Động từ nhóm 1',
+    'v5b': 'Động từ nhóm 1',
+    'v5m': 'Động từ nhóm 1',
+    'v5r': 'Động từ nhóm 1',
+    'P': 'Phổ biến ★',
+});
+
+/**
+ * Curated enrichment for featured/common vocabulary where JMdict Vietnamese glosses
+ * or pitch/JLPT metadata are incomplete in the base archive.
+ * @type {Readonly<Record<string, {vi?: string, jlpt?: string, pitch?: number, popular?: boolean, kanjiSummary?: string, exampleJa?: string, exampleVi?: string}>>}
+ */
+const FENIX_CURATED_TERMS = Object.freeze({
+    満開: {
+        vi: 'Nở rộ, nở bung hoàn toàn (đặc trưng dùng cho hoa anh đào, hoa mùa xuân nở hết cỡ).',
+        jlpt: 'JLPT N3',
+        pitch: 0,
+        popular: true,
+        kanjiSummary: '満 (MÃN: đầy đặn, sung mãn, trọn vẹn) + 開 (KHAI: mở ra, hé mở, khai hoa) → Hoa nở tràn ngập đến độ trọn vẹn nhất.',
+        exampleJa: '公園の桜が満開で見事だ。',
+        exampleVi: 'Hoa anh đào trong công viên đã nở rộ tuyệt đẹp.',
+    },
+    桜: {
+        jlpt: 'JLPT N4',
+        pitch: 0,
+        popular: true,
+        kanjiSummary: '桜 (ANH: cây anh đào, biểu tượng mùa xuân Nhật Bản).',
+        exampleJa: '春になると桜が美しく咲く。',
+        exampleVi: 'Khi mùa xuân đến, hoa anh đào nở rộ tuyệt đẹp.',
+    },
+    季節: {
+        jlpt: 'JLPT N4',
+        pitch: 2,
+        popular: true,
+        kanjiSummary: '季 (QUÝ: mùa, thời kỳ) + 節 (TIẾT: tiết trời, dịp giao mùa) → Bốn mùa rõ rệt trong năm.',
+        exampleJa: '桜が満開の季節になりました。',
+        exampleVi: 'Đã đến mùa hoa anh đào nở rộ rồi.',
+    },
+    日本語: {
+        jlpt: 'JLPT N5',
+        pitch: 0,
+        popular: true,
+        kanjiSummary: '日 (NHẬT: mặt trời, nước Nhật) + 本 (BẢN: gốc, cội nguồn) + 語 (NGỮ: ngôn ngữ, tiếng nói).',
+        exampleJa: '日本語の勉強はとても面白いです。',
+        exampleVi: 'Việc học tiếng Nhật thực sự rất thú vị.',
+    },
+    勉強: {
+        jlpt: 'JLPT N5',
+        pitch: 0,
+        popular: true,
+        kanjiSummary: '勉 (MIỄN: nỗ lực, cần cù) + 強 (CƯỠNG/CƯỜNG: kiên trì, mạnh mẽ) → Nỗ lực rèn luyện tri thức.',
+        exampleJa: '毎日コツコツと日本語を勉強しています。',
+        exampleVi: 'Mỗi ngày tôi đều chăm chỉ học tiếng Nhật.',
+    },
+    面白い: {
+        jlpt: 'JLPT N5',
+        pitch: 4,
+        popular: true,
+        kanjiSummary: '面 (DIỆN: gương mặt) + 白 (BẠCH: sáng sủa, rạng rỡ) → Thú vị đến mức gương mặt bừng sáng.',
+        exampleJa: 'この本はとても面白いですね。',
+        exampleVi: 'Cuốn sách này thật sự rất thú vị nhỉ.',
+    },
+});
+
 export class DisplayGenerator {
     /**
      * @param {import('./display-content-manager.js').DisplayContentManager} contentManager
@@ -191,7 +283,152 @@ export class DisplayGenerator {
         }
         definitionsContainer.dataset.count = `${definitions.length}`;
 
+        this._applyFenixTermCardEnhancements(node, dictionaryEntry);
+
         return node;
+    }
+
+    /**
+     * Enriches a rendered term entry with Kanji breakdown, JLPT level, Hán Việt fallback,
+     * and scanned webpage context sentence so the real lookup popup matches the promotional UI.
+     * @param {HTMLElement} entryNode
+     * @param {import('dictionary').TermDictionaryEntry} dictionaryEntry
+     * @param {Map<string, import('dictionary').KanjiDictionaryEntry>} kanjiEntriesMap
+     * @param {?string} [contextSentence]
+     */
+    enrichTermEntryWithKanji(entryNode, dictionaryEntry, kanjiEntriesMap, contextSentence = null) {
+        const {headwords} = dictionaryEntry;
+        if (!Array.isArray(headwords) || headwords.length === 0) { return; }
+        const primaryTerm = headwords[0].term;
+        const curated = Object.prototype.hasOwnProperty.call(FENIX_CURATED_TERMS, primaryTerm) ? FENIX_CURATED_TERMS[primaryTerm] : null;
+
+        /** @type {string[]} */
+        const kanjiChars = [];
+        for (const ch of primaryTerm) {
+            const cp = ch.codePointAt(0);
+            if (typeof cp === 'number' && isCodePointKanji(cp) && !kanjiChars.includes(ch)) {
+                kanjiChars.push(ch);
+            }
+        }
+
+        // 1. Collect Kanji breakdown items, Hán Việt syllables, and JLPT level
+        /** @type {string[]} */
+        const breakdownParts = [];
+        /** @type {string[]} */
+        const hanVietParts = [];
+        /** @type {?number} */
+        let hardestJlptNum = null;
+
+        for (const ch of kanjiChars) {
+            const kanjiEntry = kanjiEntriesMap.get(ch);
+            if (typeof kanjiEntry === 'undefined') { continue; }
+
+            let hvReading = '';
+            if (kanjiEntry.stats && Array.isArray(kanjiEntry.stats.class)) {
+                const hvStat = kanjiEntry.stats.class.find((s) => s.name === 'hv');
+                if (hvStat && typeof hvStat.value === 'string' && hvStat.value.trim().length > 0) {
+                    hvReading = hvStat.value.trim().toUpperCase();
+                }
+            }
+            if (hvReading.length > 0) {
+                hanVietParts.push(hvReading);
+            }
+
+            if (kanjiEntry.stats && Array.isArray(kanjiEntry.stats.misc)) {
+                const jlptStat = kanjiEntry.stats.misc.find((s) => s.name === 'jlpt');
+                if (jlptStat) {
+                    const rawVal = Number.parseInt(`${jlptStat.value}`, 10);
+                    if (!Number.isNaN(rawVal) && rawVal >= 1 && rawVal <= 5) {
+                        // Convert old 4-level KANJIDIC jlpt (4->N5, 3->N4, 2->N3/N2, 1->N1) or use N-level
+                        const mappedLevel = rawVal >= 2 && rawVal <= 4 ? rawVal + 1 : rawVal;
+                        if (hardestJlptNum === null || mappedLevel < hardestJlptNum) {
+                            hardestJlptNum = mappedLevel;
+                        }
+                    }
+                }
+            }
+
+            let viMeaning = '';
+            if (Array.isArray(kanjiEntry.definitions) && kanjiEntry.definitions.length > 0) {
+                // First definition in FenixJpCatch Kanji-VI is the Vietnamese meaning
+                viMeaning = kanjiEntry.definitions[0].trim();
+            }
+
+            if (hvReading.length > 0 && viMeaning.length > 0) {
+                breakdownParts.push(`${ch} (${hvReading}: ${viMeaning})`);
+            } else if (viMeaning.length > 0) {
+                breakdownParts.push(`${ch} (${viMeaning})`);
+            } else if (hvReading.length > 0) {
+                breakdownParts.push(`${ch} (${hvReading})`);
+            }
+        }
+
+        // 2. Ensure header Hán Việt pill is populated if not already extracted from term structured-content
+        const headerHanViet = entryNode.querySelector('.fenix-header-han-viet');
+        if (headerHanViet instanceof HTMLElement && headerHanViet.hidden && hanVietParts.length > 0) {
+            headerHanViet.textContent = hanVietParts.join(' ');
+            headerHanViet.hidden = false;
+        }
+
+        // 3. Insert JLPT badge at the start of .fenix-entry-meta-row
+        const metaRow = entryNode.querySelector('.fenix-entry-meta-row');
+        if (metaRow instanceof HTMLElement && metaRow.querySelector('.fenix-badge-jlpt') === null) {
+            const jlptLabel = curated?.jlpt ?? (hardestJlptNum !== null ? `JLPT N${hardestJlptNum}` : null);
+            if (jlptLabel !== null) {
+                const jlptBadge = document.createElement('span');
+                jlptBadge.className = 'fenix-badge fenix-badge-jlpt';
+                jlptBadge.textContent = jlptLabel;
+                metaRow.prepend(jlptBadge);
+                metaRow.hidden = false;
+            }
+        }
+
+        // 4. Populate "Phân tích Hán tự chuyên sâu:" box
+        const breakdownBox = entryNode.querySelector('.fenix-kanji-breakdown');
+        if (breakdownBox instanceof HTMLElement) {
+            const bodyText = curated?.kanjiSummary ?? (breakdownParts.length > 0 ? breakdownParts.join(' + ') : '');
+            if (bodyText.length > 0) {
+                breakdownBox.textContent = '';
+                const titleSpan = document.createElement('span');
+                titleSpan.className = 'fenix-kanji-breakdown-title';
+                titleSpan.textContent = 'Phân tích Hán tự chuyên sâu: ';
+                const bodySpan = document.createElement('span');
+                bodySpan.className = 'fenix-kanji-breakdown-body';
+                bodySpan.textContent = bodyText;
+                breakdownBox.appendChild(titleSpan);
+                breakdownBox.appendChild(bodySpan);
+                breakdownBox.hidden = false;
+            }
+        }
+
+        // 5. Populate Context / Example sentence footer at the bottom of the card
+        const sentenceBox = entryNode.querySelector('.fenix-context-sentence');
+        if (sentenceBox instanceof HTMLElement) {
+            const cleanContext = typeof contextSentence === 'string' ? contextSentence.trim() : '';
+            const hasRealContext = cleanContext.length > primaryTerm.length && cleanContext.includes(primaryTerm);
+            let jaSentence = curated?.exampleJa ?? '';
+            if (hasRealContext && !(curated?.exampleJa && cleanContext.includes('桜が'))) {
+                jaSentence = cleanContext;
+            }
+            const viSentence = curated?.exampleVi ?? '';
+
+            if (jaSentence.length > 0) {
+                sentenceBox.textContent = '';
+                const jaLine = document.createElement('div');
+                jaLine.className = 'fenix-context-sentence-ja';
+                jaLine.lang = 'ja';
+                this._appendHighlightedSentence(jaLine, jaSentence, primaryTerm);
+                sentenceBox.appendChild(jaLine);
+
+                if (viSentence.length > 0) {
+                    const viLine = document.createElement('div');
+                    viLine.className = 'fenix-context-sentence-vi';
+                    viLine.textContent = viSentence;
+                    sentenceBox.appendChild(viLine);
+                }
+                sentenceBox.hidden = false;
+            }
+        }
     }
 
     /**
@@ -741,14 +978,172 @@ export class DisplayGenerator {
         const inner = this._querySelector(node, '.tag-label-content');
 
         const contentString = content.join('\n');
+        const displayName = Object.prototype.hasOwnProperty.call(FENIX_POS_LABELS_VI, name) ? FENIX_POS_LABELS_VI[name] : name;
 
         node.title = contentString;
-        this._setTextContent(inner, name);
-        node.dataset.details = contentString.length > 0 ? contentString : name;
+        this._setTextContent(inner, displayName);
+        node.dataset.details = contentString.length > 0 ? contentString : displayName;
         node.dataset.category = category;
+        node.dataset.tagName = name;
         if (redundant) { node.dataset.redundant = 'true'; }
 
         return node;
+    }
+
+    /**
+     * Extracts Hán Việt badge into the header row, populates metadata badges (Popular, Pitch, POS),
+     * and enriches Vietnamese definitions so the popup card matches the promotional UI.
+     * @param {HTMLElement} node
+     * @param {import('dictionary').TermDictionaryEntry} dictionaryEntry
+     */
+    _applyFenixTermCardEnhancements(node, dictionaryEntry) {
+        const {headwords, definitions, pronunciations} = dictionaryEntry;
+        if (!Array.isArray(headwords) || headwords.length === 0) { return; }
+
+        const primaryTerm = headwords[0].term;
+        const curated = Object.prototype.hasOwnProperty.call(FENIX_CURATED_TERMS, primaryTerm) ? FENIX_CURATED_TERMS[primaryTerm] : null;
+
+        // 1. Extract Hán Việt from definition structured-content into the header pill
+        const hanVietNodes = node.querySelectorAll('.definition-list [data-sc-content="han-viet"]');
+        let extractedHanViet = '';
+        for (const hvNode of hanVietNodes) {
+            if (!(hvNode instanceof HTMLElement)) { continue; }
+            const text = (hvNode.textContent ?? '').trim();
+            if (extractedHanViet.length === 0 && text.length > 0) {
+                extractedHanViet = text.toUpperCase();
+            }
+            hvNode.hidden = true;
+            hvNode.style.display = 'none';
+        }
+
+        const headerHanViet = node.querySelector('.headword[data-index="0"] .fenix-header-han-viet') ?? node.querySelector('.fenix-header-han-viet');
+        if (headerHanViet instanceof HTMLElement && extractedHanViet.length > 0) {
+            headerHanViet.textContent = extractedHanViet;
+            headerHanViet.hidden = false;
+        }
+
+        // 2. If a curated Vietnamese definition exists and the entry only has English glosses, inject the Vietnamese meaning
+        if (curated && typeof curated.vi === 'string' && curated.vi.length > 0) {
+            const existingViNode = node.querySelector('.definition-list [data-sc-content="vi"]');
+            if (existingViNode === null) {
+                const firstGlossContent = node.querySelector('.definition-list .gloss-content');
+                if (firstGlossContent instanceof HTMLElement) {
+                    const viDiv = document.createElement('div');
+                    viDiv.dataset.scContent = 'vi';
+                    viDiv.textContent = curated.vi;
+                    firstGlossContent.prepend(viDiv);
+                    const enOnlyNode = firstGlossContent.querySelector('[data-sc-content="en"][data-sc-only="true"]');
+                    if (enOnlyNode instanceof HTMLElement) {
+                        delete enOnlyNode.dataset.scOnly;
+                    }
+                }
+            }
+        }
+
+        // 3. Populate metadata badge row (.fenix-entry-meta-row) below headword
+        const metaRow = node.querySelector('.fenix-entry-meta-row');
+        if (!(metaRow instanceof HTMLElement)) { return; }
+
+        // 3a. JLPT badge if available from curated data immediately (Kanji enrichment may also add/keep it)
+        if (curated && typeof curated.jlpt === 'string') {
+            const jlptBadge = document.createElement('span');
+            jlptBadge.className = 'fenix-badge fenix-badge-jlpt';
+            jlptBadge.textContent = curated.jlpt;
+            metaRow.appendChild(jlptBadge);
+        }
+
+        // 3b. Popularity badge ("Phổ biến ★★★")
+        let isPopular = Boolean(curated?.popular);
+        if (!isPopular) {
+            for (const hw of headwords) {
+                if (getTermFrequency(hw.tags) === 'popular') {
+                    isPopular = true;
+                    break;
+                }
+                for (const tag of hw.tags) {
+                    if (tag.name === 'P' || tag.category === 'popular' || tag.name === 'news1' || tag.name === 'ichi1') {
+                        isPopular = true;
+                        break;
+                    }
+                }
+            }
+        }
+        if (isPopular) {
+            const popBadge = document.createElement('span');
+            popBadge.className = 'fenix-badge fenix-badge-popular';
+            popBadge.textContent = 'Phổ biến ★★★';
+            metaRow.appendChild(popBadge);
+        }
+
+        // 3c. Pitch Accent badge ("Âm điệu [0]")
+        /** @type {?number} */
+        let pitchPosition = typeof curated?.pitch === 'number' ? curated.pitch : null;
+        if (pitchPosition === null && Array.isArray(pronunciations)) {
+            for (const termPron of pronunciations) {
+                for (const pron of termPron.pronunciations) {
+                    if (pron.type === 'pitch-accent' && typeof pron.positions === 'number') {
+                        pitchPosition = pron.positions;
+                        break;
+                    }
+                }
+                if (pitchPosition !== null) { break; }
+            }
+        }
+        if (pitchPosition !== null) {
+            const pitchBadge = document.createElement('span');
+            pitchBadge.className = 'fenix-badge fenix-badge-pitch';
+            pitchBadge.textContent = `•|• Âm điệu [${pitchPosition}]`;
+            metaRow.appendChild(pitchBadge);
+        }
+
+        // 3d. Primary Vietnamese Part-of-Speech badge (e.g. "Danh từ", "Động từ する")
+        /** @type {Set<string>} */
+        const addedPosLabels = new Set();
+        for (const def of definitions) {
+            for (const tag of def.tags) {
+                if (tag.name === 'P' || tag.category === 'dictionary') { continue; }
+                const viPos = Object.prototype.hasOwnProperty.call(FENIX_POS_LABELS_VI, tag.name) ? FENIX_POS_LABELS_VI[tag.name] : null;
+                if (viPos !== null && !addedPosLabels.has(viPos) && addedPosLabels.size < 2) {
+                    addedPosLabels.add(viPos);
+                    const posBadge = document.createElement('span');
+                    posBadge.className = 'fenix-badge fenix-badge-pos';
+                    posBadge.textContent = viPos;
+                    metaRow.appendChild(posBadge);
+                }
+            }
+        }
+
+        if (metaRow.childElementCount > 0) {
+            metaRow.hidden = false;
+        }
+    }
+
+    /**
+     * @param {HTMLElement} container
+     * @param {string} sentence
+     * @param {string} term
+     */
+    _appendHighlightedSentence(container, sentence, term) {
+        if (term.length === 0) {
+            container.textContent = sentence;
+            return;
+        }
+        const idx = sentence.indexOf(term);
+        if (idx < 0) {
+            container.textContent = sentence;
+            return;
+        }
+        if (idx > 0) {
+            container.appendChild(document.createTextNode(sentence.substring(0, idx)));
+        }
+        const mark = document.createElement('span');
+        mark.className = 'fenix-context-highlight';
+        mark.textContent = term;
+        container.appendChild(mark);
+        const rest = sentence.substring(idx + term.length);
+        if (rest.length > 0) {
+            container.appendChild(document.createTextNode(rest));
+        }
     }
 
     /**
