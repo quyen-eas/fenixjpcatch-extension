@@ -16,7 +16,6 @@
  */
 
 import {CloudController} from '../cloud/cloud-controller.js';
-import {getExtensionRedirectUri} from '../cloud/firebase-auth.js';
 
 /**
  * @typedef {{
@@ -110,20 +109,11 @@ class SavedWordsDashboard {
             const nameSpan = document.createElement('span');
             nameSpan.textContent = name;
 
-            const configBtn = document.createElement('button');
-            configBtn.type = 'button';
-            configBtn.className = 'sw-auth-btn';
-            configBtn.style.marginLeft = '8px';
-            configBtn.textContent = 'Cấu hình Cloud';
-            configBtn.addEventListener('click', () => {
-                void this._openCloudConfigModal();
-            });
-
             const logoutBtn = document.createElement('button');
             logoutBtn.type = 'button';
             logoutBtn.className = 'sw-auth-btn';
             logoutBtn.id = 'sw-logout-btn';
-            logoutBtn.style.marginLeft = '6px';
+            logoutBtn.style.marginLeft = '8px';
             logoutBtn.textContent = 'Đăng xuất';
             logoutBtn.addEventListener('click', async () => {
                 await this._controller.logout();
@@ -131,7 +121,7 @@ class SavedWordsDashboard {
                 await this._loadWords();
             });
 
-            profileWrap.append(avatar, nameSpan, configBtn, logoutBtn);
+            profileWrap.append(avatar, nameSpan, logoutBtn);
             container.append(profileWrap);
 
             if (userSummary !== null) {
@@ -160,15 +150,6 @@ class SavedWordsDashboard {
                 userSummary.append(summaryRow);
             }
         } else {
-            const configBtn = document.createElement('button');
-            configBtn.type = 'button';
-            configBtn.className = 'sw-auth-btn';
-            configBtn.style.marginRight = '8px';
-            configBtn.textContent = 'Cấu hình Cloud';
-            configBtn.addEventListener('click', () => {
-                void this._openCloudConfigModal();
-            });
-
             const loginBtn = document.createElement('button');
             loginBtn.type = 'button';
             loginBtn.className = 'sw-auth-btn';
@@ -177,7 +158,7 @@ class SavedWordsDashboard {
             loginBtn.addEventListener('click', async () => {
                 await this._handleLogin();
             });
-            container.append(configBtn, loginBtn);
+            container.append(loginBtn);
 
             if (userSummary !== null) {
                 userSummary.textContent = '';
@@ -219,157 +200,11 @@ class SavedWordsDashboard {
             await this._controller.signInWithGoogle();
             await this._renderAuthState();
             await this._handleSync();
-        } catch (e) {
-            const message = e instanceof Error ? e.message : String(e);
-            if (message === 'CLOUD_CONFIG_MISSING') {
-                if (syncText !== null) {
-                    syncText.textContent = 'Chưa cấu hình Cloud';
-                }
-                await this._openCloudConfigModal();
-                return;
-            }
+        } catch {
             if (syncText !== null) {
                 syncText.textContent = 'Đăng nhập chưa hoàn tất';
             }
         }
-    }
-
-    /**
-     * Opens a dialog allowing runtime configuration of Firebase & Google OAuth or offline demo mode.
-     */
-    async _openCloudConfigModal() {
-        const existing = document.querySelector('#sw-cloud-config-modal');
-        if (existing !== null) {
-            existing.remove();
-        }
-
-        const config = await this._controller.getCloudConfig();
-        const redirectUri = getExtensionRedirectUri();
-
-        const overlay = document.createElement('div');
-        overlay.id = 'sw-cloud-config-modal';
-        overlay.style.cssText = 'position:fixed;inset:0;background:rgba(10,8,18,0.75);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;z-index:9999;padding:16px;';
-
-        const card = document.createElement('div');
-        card.style.cssText = 'background:#1c192b;border:1px solid rgba(255,255,255,0.12);border-radius:16px;max-width:520px;width:100%;padding:24px;color:#ede9fe;box-shadow:0 20px 50px rgba(0,0,0,0.5);font-family:inherit;';
-
-        const title = document.createElement('h3');
-        title.style.cssText = 'margin:0 0 8px 0;font-size:1.15rem;font-weight:700;color:#fff;';
-        title.textContent = 'Cấu hình kết nối Firebase & Google OAuth';
-
-        const desc = document.createElement('p');
-        desc.style.cssText = 'margin:0 0 16px 0;font-size:0.85rem;color:#a59ec1;line-height:1.5;';
-        desc.textContent = 'Nhập thông số Firebase Project của bạn (lưu cục bộ trên trình duyệt này hoặc đặt trong file .env.local khi build).';
-
-        const redirectBox = document.createElement('div');
-        redirectBox.style.cssText = 'background:#13111c;border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:0.78rem;';
-        const redirectLabel = document.createElement('div');
-        redirectLabel.style.cssText = 'color:#a59ec1;margin-bottom:4px;';
-        redirectLabel.textContent = 'Authorized Redirect URI (thêm vào Google Cloud Console):';
-        const redirectValue = document.createElement('code');
-        redirectValue.style.cssText = 'color:#f5b787;word-break:break-all;user-select:all;';
-        redirectValue.textContent = redirectUri;
-        redirectBox.append(redirectLabel, redirectValue);
-
-        /**
-         * @param {string} labelText
-         * @param {string} placeholder
-         * @param {string} initialValue
-         * @returns {{wrapper: HTMLElement, input: HTMLInputElement}}
-         */
-        const createField = (labelText, placeholder, initialValue) => {
-            const wrapper = document.createElement('div');
-            wrapper.style.cssText = 'margin-bottom:12px;';
-            const lbl = document.createElement('label');
-            lbl.style.cssText = 'display:block;font-size:0.8rem;color:#cbd5e1;margin-bottom:4px;font-weight:500;';
-            lbl.textContent = labelText;
-            const input = document.createElement('input');
-            input.type = 'text';
-            input.placeholder = placeholder;
-            input.value = initialValue;
-            input.style.cssText = 'width:100%;box-sizing:border-box;padding:9px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.14);background:#13111c;color:#fff;font-size:0.85rem;outline:none;';
-            wrapper.append(lbl, input);
-            return {wrapper, input};
-        };
-
-        const apiKeyField = createField('Firebase Web API Key *', 'AIzaSy...', config.firebaseApiKey);
-        const clientIdField = createField('Google OAuth Client ID *', '123456789-xxx.apps.googleusercontent.com', config.googleOAuthClientId);
-        const projectField = createField('Firebase Project ID', 'fenixjpcatch', config.firebaseProjectId);
-        const baseUrlField = createField('Functions Base URL (tuỳ chọn / Emulator)', 'https://asia-northeast1-fenixjpcatch.cloudfunctions.net', config.functionsBaseUrl);
-
-        const actions = document.createElement('div');
-        actions.style.cssText = 'display:flex;justify-content:flex-end;gap:10px;margin-top:18px;flex-wrap:wrap;';
-
-        const cancelBtn = document.createElement('button');
-        cancelBtn.type = 'button';
-        cancelBtn.className = 'sw-auth-btn';
-        cancelBtn.textContent = 'Đóng';
-        cancelBtn.addEventListener('click', () => {
-            overlay.remove();
-        });
-
-        const copyEnvBtn = document.createElement('button');
-        copyEnvBtn.type = 'button';
-        copyEnvBtn.className = 'sw-auth-btn';
-        copyEnvBtn.textContent = 'Copy .env.local';
-        copyEnvBtn.addEventListener('click', async () => {
-            const envLines = [
-                `FENIX_FIREBASE_API_KEY=${apiKeyField.input.value.trim()}`,
-                `FENIX_FIREBASE_PROJECT_ID=${projectField.input.value.trim() || 'fenixjpcatch'}`,
-                'FENIX_FIREBASE_FUNCTIONS_REGION=asia-northeast1',
-                `FENIX_FIREBASE_FUNCTIONS_BASE_URL=${baseUrlField.input.value.trim()}`,
-                `FENIX_GOOGLE_OAUTH_CLIENT_ID=${clientIdField.input.value.trim()}`,
-            ].join('\n');
-            if (navigator.clipboard) {
-                await navigator.clipboard.writeText(envLines);
-                copyEnvBtn.textContent = 'Đã copy!';
-            }
-        });
-
-        const saveOnlyBtn = document.createElement('button');
-        saveOnlyBtn.type = 'button';
-        saveOnlyBtn.className = 'sw-auth-btn';
-        saveOnlyBtn.textContent = 'Lưu cấu hình';
-        saveOnlyBtn.addEventListener('click', async () => {
-            await this._controller.setCloudConfig({
-                firebaseApiKey: apiKeyField.input.value.trim(),
-                googleOAuthClientId: clientIdField.input.value.trim(),
-                firebaseProjectId: projectField.input.value.trim() || 'fenixjpcatch',
-                functionsBaseUrl: baseUrlField.input.value.trim(),
-            });
-            overlay.remove();
-            await this._handleSync();
-        });
-
-        const saveBtn = document.createElement('button');
-        saveBtn.type = 'button';
-        saveBtn.className = 'sw-auth-btn';
-        saveBtn.style.cssText = 'background:#713455;color:#ffd8ec;border-color:#9b4d77;';
-        saveBtn.textContent = 'Lưu & Đăng nhập Google';
-        saveBtn.addEventListener('click', async () => {
-            await this._controller.setCloudConfig({
-                firebaseApiKey: apiKeyField.input.value.trim(),
-                googleOAuthClientId: clientIdField.input.value.trim(),
-                firebaseProjectId: projectField.input.value.trim() || 'fenixjpcatch',
-                functionsBaseUrl: baseUrlField.input.value.trim(),
-            });
-            overlay.remove();
-            await this._handleLogin();
-        });
-
-        actions.append(cancelBtn, copyEnvBtn, saveOnlyBtn, saveBtn);
-        card.append(
-            title,
-            desc,
-            redirectBox,
-            apiKeyField.wrapper,
-            clientIdField.wrapper,
-            projectField.wrapper,
-            baseUrlField.wrapper,
-            actions,
-        );
-        overlay.append(card);
-        document.body.append(overlay);
     }
 
     /**
