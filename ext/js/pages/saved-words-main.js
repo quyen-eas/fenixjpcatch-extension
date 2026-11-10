@@ -84,20 +84,6 @@ class SavedWordsDashboard {
                 void this._handleSync();
             });
         }
-
-        const exportAnkiBtn = document.querySelector('#sw-btn-export-anki');
-        if (exportAnkiBtn !== null) {
-            exportAnkiBtn.addEventListener('click', () => {
-                this._exportAnki();
-            });
-        }
-
-        const exportCsvBtn = document.querySelector('#sw-btn-export-csv');
-        if (exportCsvBtn !== null) {
-            exportCsvBtn.addEventListener('click', () => {
-                this._exportCsv();
-            });
-        }
     }
 
     /**
