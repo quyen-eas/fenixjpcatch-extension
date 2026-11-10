@@ -36,9 +36,11 @@ The extension only makes network requests in the following specific scenarios:
 
 - Anki connectivity operates locally through [AnkiConnect](https://foosoft.net/projects/anki-connect/) on your local machine (`http://127.0.0.1:8765`). No data is sent to external servers.
 
-#### 4. Future Cloud Features (Optional)
+#### 4. Optional Cloud Word Synchronization (Google Sign-In & Firebase)
 
-- Future versions may introduce an optional feature to sync or save words (☆). Any cloud synchronization will require explicit user consent and authentication. Offline dictionary lookups will always remain strictly offline.
+- If you choose to sign in with your Google account in the Saved Words notebook (`saved-words.html`), FenixJpCatch uses `chrome.identity` (Google OAuth 2.0) and Google Firebase Authentication / Cloud Firestore to sync your saved vocabulary (`expression`, `reading`, `jmdictSeq`, learning `status`, and the example `contextSentence` / `sourceUrl` where you saved the word) to your personal cloud notebook (`users/{uid}/words`).
+- Cloud sync is **100% optional** and only activates when you explicitly click "Sign in with Google". Your saved words are strictly isolated to your authenticated user ID (`uid`) via Firestore Security Rules and are never shared with third parties.
+- Offline dictionary lookups and web page text scanning always remain strictly offline.
 
 ---
 
@@ -74,6 +76,8 @@ Tiện ích chỉ thực hiện kết nối mạng trong các trường hợp c�
 
 - Kết nối Anki hoạt động cục bộ thông qua AnkiConnect trên máy tính của bạn (`http://127.0.0.1:8765`). Không truyền dữ liệu qua Internet.
 
-#### 4. Tính năng đám mây trong tương lai (Tùy chọn)
+#### 4. Đồng bộ Sổ Từ Đám Mây (Tùy chọn qua Google Sign-In & Firebase)
 
-- Các phiên bản tương lai có thể bổ sung tính năng lưu từ đồng bộ đám mây (☆). Mọi tương tác đám mây đều phải có sự đồng ý chủ động của người dùng. Tính năng tra từ điển cơ bản sẽ luôn luôn hoạt động hoàn toàn offline.
+- Nếu bạn chủ động chọn "Đăng nhập Google" trong trang Sổ Từ (`saved-words.html`), FenixJpCatch sử dụng `chrome.identity` (Google OAuth 2.0) cùng Firebase Authentication / Cloud Firestore để đồng bộ danh sách từ vựng bạn đã bấm lưu (`☆`) (bao gồm từ vựng, cách đọc, trạng thái thuộc từ và câu ngữ cảnh nơi bạn lưu từ) vào sổ từ cá nhân của riêng bạn (`users/{uid}/words`).
+- Tính năng đồng bộ đám mây là **hoàn toàn tùy chọn** và chỉ kích hoạt khi bạn chủ động đăng nhập. Dữ liệu sổ từ chỉ thuộc quyền truy cập của chính tài khoản `uid` của bạn và không bao giờ bị chia sẻ cho bên thứ ba.
+- Tính năng tra từ điển và quét văn bản cơ bản luôn hoạt động hoàn toàn ngoại tuyến (offline).
