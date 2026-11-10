@@ -68,6 +68,19 @@ export class WelcomeController {
      * Runs the first-run setup. Resolves when it is finished; the page is usable while it runs.
      */
     async run() {
+        const installed = await this._installer.getInstalled();
+        const alreadyInstalled = [...installed.values()].every(Boolean);
+        if (alreadyInstalled) {
+            for (const spec of FENIX_DICTIONARIES) {
+                this._render({spec, phase: 'installed'});
+            }
+            this._updateSummary(true);
+            document.documentElement.dataset.fenixSetup = 'done';
+            void this._applyAudioFallback();
+            void this._disableShowGuide();
+            return;
+        }
+
         document.documentElement.dataset.fenixSetup = 'running';
         const prevention = this._settingsController.preventPageExit();
         try {

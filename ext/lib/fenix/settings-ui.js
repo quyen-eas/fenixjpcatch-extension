@@ -155,6 +155,18 @@ function showAutoSaveNotification() {
 }
 
 function saveSettings() {
+    if (settingsControllerInstance) {
+        const key = currentSettings.activationKey;
+        const includeVal = (key === 'none' || !key) ? '' : key;
+        const delayVal = Number.isFinite(currentSettings.hoverDelay) ? currentSettings.hoverDelay : 15;
+        void settingsControllerInstance.modifyProfileSettings([
+            {action: 'set', path: 'scanning.inputs[0].include', value: includeVal},
+            {action: 'set', path: 'scanning.inputs[0].exclude', value: 'mouse0'},
+            {action: 'set', path: 'scanning.delay', value: delayVal},
+            {action: 'set', path: 'scanning.selectText', value: Boolean(currentSettings.selectionScan)},
+            {action: 'set', path: 'clipboard.enableBackgroundMonitor', value: Boolean(currentSettings.clipboardScan)},
+        ]).catch(() => {});
+    }
     if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
         chrome.storage.local.set({fenixDashboardSettings: currentSettings}, () => {
             showAutoSaveNotification();

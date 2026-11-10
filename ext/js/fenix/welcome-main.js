@@ -60,10 +60,56 @@ await Application.main(true, async (application) => {
 
     const themeController = new ThemeController(document.documentElement);
     themeController.prepare();
-    const {popupTheme} = (await settingsController.getOptions()).general;
+    const initialOptions = await settingsController.getOptions();
+    const {popupTheme} = initialOptions.general;
     themeController.theme = popupTheme;
     themeController.siteOverride = true;
     themeController.updateTheme();
+
+    const searchToggleEl = document.querySelector('#header-search-toggle');
+    if (searchToggleEl instanceof HTMLInputElement) {
+        searchToggleEl.checked = initialOptions.general.enable;
+    }
+
+    const firstInput = initialOptions.scanning?.inputs?.[0];
+    if (firstInput) {
+        const inc = (firstInput.include || '').trim().toLowerCase();
+        const activeMode = inc === 'shift' ? 'shift' : (inc === 'mouse0' ? 'select' : 'none');
+        const targetRadio = document.querySelector(`input[name="triggerMode"][value="${activeMode}"]`);
+        if (targetRadio instanceof HTMLInputElement) {
+            targetRadio.checked = true;
+            for (const el of document.querySelectorAll('.trigger-option')) {
+                el.classList.remove('bg-surface-container-highest', 'text-on-surface');
+                el.classList.add('bg-surface-container-lowest/60', 'text-on-surface-variant');
+            }
+            const parentLabel = targetRadio.closest('.trigger-option');
+            if (parentLabel !== null) {
+                parentLabel.classList.remove('bg-surface-container-lowest/60', 'text-on-surface-variant');
+                parentLabel.classList.add('bg-surface-container-highest', 'text-on-surface');
+            }
+        }
+    }
+
+    window.addEventListener('fenix:search-enable-change', (e) => {
+        const customEvent = /** @type {CustomEvent<{enabled: boolean}>} */ (e);
+        const enabled = Boolean(customEvent.detail?.enabled);
+        void settingsController.modifyProfileSettings([{
+            action: 'set',
+            path: 'general.enable',
+            value: enabled,
+        }]);
+    });
+
+    window.addEventListener('fenix:trigger-mode-change', (e) => {
+        const customEvent = /** @type {CustomEvent<{mode: string}>} */ (e);
+        const mode = customEvent.detail?.mode || 'none';
+        const includeVal = mode === 'shift' ? 'shift' : (mode === 'select' ? 'mouse0' : '');
+        const excludeVal = mode === 'select' ? '' : 'mouse0';
+        void settingsController.modifyProfileSettings([
+            {action: 'set', path: 'scanning.inputs[0].include', value: includeVal},
+            {action: 'set', path: 'scanning.inputs[0].exclude', value: excludeVal},
+        ]);
+    });
 
     /**
      * @param {import('settings-modifications').Modification[]} targets

@@ -3,6 +3,11 @@
  * Powered by Fenix Language Ecosystem
  */
 
+import {CloudController} from '../../js/cloud/cloud-controller.js';
+
+const cloudController = new CloudController();
+const starredWords = new Set();
+
 const dictionaryStore = {
     'sakura': {
         kanji: '桜',
@@ -79,11 +84,11 @@ const dictionaryStore = {
 };
 
 let currentWordKey = 'mankai';
-let isStarred = false;
 
 function renderPopup(key) {
     const item = dictionaryStore[key] || dictionaryStore['mankai'];
     currentWordKey = key;
+    const isStarred = starredWords.has(key);
     const popup = document.getElementById('fenixFloatingPopup');
     if (!popup) return;
 
@@ -149,13 +154,26 @@ function renderPopup(key) {
         });
     }
 
-    // Star button click
+    // Star button click -> saves word to CloudController (local notebook + Firestore)
     const starBtn = document.getElementById('popupStarBtn');
     if (starBtn) {
-        starBtn.addEventListener('click', (e) => {
+        starBtn.addEventListener('click', async (e) => {
             e.stopPropagation();
-            isStarred = !isStarred;
-            renderPopup(currentWordKey);
+            if (starredWords.has(currentWordKey)) {
+                starredWords.delete(currentWordKey);
+                renderPopup(currentWordKey);
+                await cloudController.deleteSavedWord('', item.kanji, item.kana);
+            } else {
+                starredWords.add(currentWordKey);
+                renderPopup(currentWordKey);
+                await cloudController.saveWord({
+                    expression: item.kanji,
+                    reading: item.kana,
+                    contextSentence: item.exampleJp,
+                    sourceUrl: 'https://nhk.or.jp/news/easy/k1001438910/',
+                    sourceTitle: 'NHK News Web Easy (FenixJpCatch Playground)',
+                });
+            }
         });
     }
 }
@@ -246,7 +264,28 @@ document.addEventListener('DOMContentLoaded', async () => {
         permToggle.addEventListener('change', handlePermissionToggle);
     }
 
-    // Trigger Mode selection
+    // Top nav "Tra từ Hover" smooth scroll + highlight playground
+    const navHoverLookup = document.getElementById('nav-hover-lookup');
+    const playgroundSection = document.getElementById('practice-playground-section');
+    const highlightPlayground = () => {
+        if (!playgroundSection) { return; }
+        playgroundSection.scrollIntoView({behavior: 'smooth', block: 'center'});
+        playgroundSection.classList.add('ring-2', 'ring-tertiary-fixed');
+        setTimeout(() => {
+            playgroundSection.classList.remove('ring-2', 'ring-tertiary-fixed');
+        }, 1800);
+    };
+    if (navHoverLookup) {
+        navHoverLookup.addEventListener('click', (e) => {
+            e.preventDefault();
+            highlightPlayground();
+        });
+    }
+    if (window.location.hash === '#practice-playground-section') {
+        setTimeout(highlightPlayground, 200);
+    }
+
+    // Trigger Mode selection -> dispatches custom event so welcome-main.js updates real profile settings
     const triggerRadios = document.querySelectorAll('input[name="triggerMode"]');
     triggerRadios.forEach(radio => {
         radio.addEventListener('change', () => {
@@ -259,20 +298,21 @@ document.addEventListener('DOMContentLoaded', async () => {
                 parentLabel.classList.remove('bg-surface-container-lowest/60', 'text-on-surface-variant');
                 parentLabel.classList.add('bg-surface-container-highest', 'text-on-surface');
             }
-            // Save preferred trigger
             if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
                 chrome.storage.local.set({fenixPreferredTrigger: radio.value});
             }
+            window.dispatchEvent(new CustomEvent('fenix:trigger-mode-change', {detail: {mode: radio.value}}));
         });
     });
 
-    // Header search toggle
+    // Header search toggle -> dispatches custom event so welcome-main.js updates general.enable
     const searchToggle = document.getElementById('header-search-toggle');
     if (searchToggle) {
         searchToggle.addEventListener('change', () => {
             if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
                 chrome.storage.local.set({fenixSearchEnabled: searchToggle.checked});
             }
+            window.dispatchEvent(new CustomEvent('fenix:search-enable-change', {detail: {enabled: searchToggle.checked}}));
         });
     }
 
@@ -304,30 +344,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         observer.observe(hiddenList, {childList: true, subtree: true, attributes: true, characterData: true});
     }
 
-    // Start Now Button
+    // Start Now Button -> applies settings and opens Sổ từ & Bảng điều khiển (/saved-words.html)
     const startBtn = document.getElementById('btnStartNow');
     if (startBtn) {
         startBtn.addEventListener('click', () => {
-            if (document.documentElement.dataset.fenixSetup === 'running') {
-                startBtn.innerHTML = `
-                    <span class="material-symbols-outlined animate-spin text-[20px]">sync</span>
-                    <span>Đang hoàn tất nạp từ điển...</span>
-                `;
-                const waitDone = setInterval(() => {
-                    if (document.documentElement.dataset.fenixSetup !== 'running') {
-                        clearInterval(waitDone);
-                        window.location.href = '/search.html';
-                    }
-                }, 400);
-                return;
+            const checkedRadio = document.querySelector('input[name="triggerMode"]:checked');
+            if (checkedRadio instanceof HTMLInputElement) {
+                window.dispatchEvent(new CustomEvent('fenix:trigger-mode-change', {detail: {mode: checkedRadio.value}}));
             }
             startBtn.innerHTML = `
                 <span class="material-symbols-outlined animate-spin text-[20px]">sync</span>
-                <span>Khởi tạo thành công!</span>
+                <span>Đã lưu cấu hình! Đang mở Bảng điều khiển...</span>
             `;
             setTimeout(() => {
-                window.location.href = '/search.html';
-            }, 600);
+                window.location.href = '/saved-words.html';
+            }, 350);
         });
     }
 });
