@@ -16,6 +16,19 @@
  */
 
 import {CloudApi} from './cloud-api.js';
+import {
+    computeWordId,
+    deleteSavedWordFromFirestore,
+    exchangeGoogleTokenForFirebaseAuth,
+    getFunctionsBaseUrl,
+    isCloudConfigReady,
+    launchGoogleWebAuthFlow,
+    listSavedWordsFromFirestore,
+    loadCloudConfig,
+    refreshFirebaseIdToken,
+    saveCloudConfig,
+    saveWordToFirestore,
+} from './firebase-auth.js';
 import {OfflineQueue} from './offline-queue.js';
 
 const AUTH_STORAGE_KEY = 'fenix_cloud_auth';
@@ -33,6 +46,7 @@ const CACHE_STORAGE_KEY = 'fenix_saved_words_cache';
 /**
  * @typedef {{
  *   token: string,
+ *   refreshToken?: string,
  *   user: UserProfile,
  *   expiresAt?: number,
  * }} AuthState
@@ -45,6 +59,10 @@ const CACHE_STORAGE_KEY = 'fenix_saved_words_cache';
  *   updatedAt: string,
  *   expression?: string,
  *   reading?: string,
+ *   jmdictSeq?: number | null,
+ *   contextSentence?: string | null,
+ *   sourceUrl?: string | null,
+ *   sourceTitle?: string | null,
  * }} SavedWordCacheEntry
  */
 
@@ -113,6 +131,81 @@ export class CloudController {
     }
 
     /**
+     * Loads the current cloud configuration and updates the CloudApi base URL if configured.
+     * @returns {Promise<import('./firebase-auth.js').CloudConfig>}
+     */
+    async getCloudConfig() {
+        const config = await loadCloudConfig();
+        if (config.functionsBaseUrl !== '' || config.firebaseProjectId !== '') {
+            this._cloudApi.baseUrl = getFunctionsBaseUrl(config);
+        }
+        return config;
+    }
+
+    /**
+     * Saves runtime cloud configuration overrides and updates the CloudApi base URL.
+     * @param {Partial<import('./firebase-auth.js').CloudConfig>} overrides
+     * @returns {Promise<import('./firebase-auth.js').CloudConfig>}
+     */
+    async setCloudConfig(overrides) {
+        const config = await saveCloudConfig(overrides);
+        this._cloudApi.baseUrl = getFunctionsBaseUrl(config);
+        return config;
+    }
+
+    /**
+     * Performs interactive Google OAuth sign-in via `chrome.identity.launchWebAuthFlow`
+     * and exchanges the Google ID token for a Firebase Auth session.
+     * @returns {Promise<AuthState>}
+     */
+    async signInWithGoogle() {
+        const config = await this.getCloudConfig();
+        if (!isCloudConfigReady(config)) {
+            throw new Error('CLOUD_CONFIG_MISSING');
+        }
+        const {googleIdToken, redirectUri} = await launchGoogleWebAuthFlow(config.googleOAuthClientId);
+        const authState = await exchangeGoogleTokenForFirebaseAuth(googleIdToken, redirectUri, config.firebaseApiKey);
+        await this.setAuthState(authState);
+        await this.syncQueue();
+        return authState;
+    }
+
+    /**
+     * Returns a valid Firebase ID token, automatically refreshing it if expired.
+     * @returns {Promise<?string>}
+     */
+    async getValidAuthToken() {
+        const auth = await this.getAuthState();
+        if (auth === null || !auth.token) {
+            return null;
+        }
+        if (
+            typeof auth.expiresAt === 'number' &&
+            Date.now() >= auth.expiresAt - 60000 &&
+            typeof auth.refreshToken === 'string' &&
+            auth.refreshToken !== ''
+        ) {
+            try {
+                const config = await this.getCloudConfig();
+                if (config.firebaseApiKey !== '') {
+                    const refreshed = await refreshFirebaseIdToken(auth.refreshToken, config.firebaseApiKey);
+                    const updatedAuth = {
+                        ...auth,
+                        token: refreshed.token,
+                        refreshToken: refreshed.refreshToken,
+                        expiresAt: refreshed.expiresAt,
+                    };
+                    await this.setAuthState(updatedAuth);
+                    return updatedAuth.token;
+                }
+            } catch {
+                // Keep existing token if refresh fails due to transient offline state
+            }
+        }
+        return auth.token;
+    }
+
+    /**
      * @returns {Promise<Record<string, SavedWordCacheEntry>>}
      */
     async getSavedWordsCache() {
@@ -154,6 +247,100 @@ export class CloudController {
     }
 
     /**
+     * Saves a word online via Cloud Functions (when explicitly configured) or directly via Cloud Firestore REST API.
+     * @param {{
+     *   expression: string,
+     *   reading: string,
+     *   jmdictSeq?: number | null,
+     *   contextSentence?: string | null,
+     *   sourceUrl?: string | null,
+     *   sourceTitle?: string | null,
+     * }} params
+     * @param {string} token
+     * @returns {Promise<{success: boolean, wordId: string, created: boolean, status: string, updatedAt: string}>}
+     */
+    async _saveWordOnline(params, token) {
+        const auth = await this.getAuthState();
+        const config = await this.getCloudConfig();
+        const uid = auth?.user?.uid || '';
+        const projectId = config.firebaseProjectId || 'fenixjpcatch';
+        const hasRealFirebaseAuth = uid !== '' && typeof auth?.refreshToken === 'string' && auth.refreshToken !== '';
+
+        if (hasRealFirebaseAuth && config.functionsBaseUrl === '') {
+            return await saveWordToFirestore(params, projectId, uid, token);
+        }
+        try {
+            return await this._cloudApi.saveWord(params, token);
+        } catch (e) {
+            if (uid !== '') {
+                return await saveWordToFirestore(params, projectId, uid, token);
+            }
+            throw e;
+        }
+    }
+
+    /**
+     * Lists saved words online via Cloud Functions (when explicitly configured) or directly via Cloud Firestore REST API.
+     * @param {{
+     *   limit?: number,
+     *   startAfter?: string | null,
+     *   status?: string | null,
+     * }} params
+     * @param {string} token
+     * @returns {Promise<{words: Array<Record<string, unknown>>, nextCursor: ?string}>}
+     */
+    async _listSavedWordsOnline(params, token) {
+        const auth = await this.getAuthState();
+        const config = await this.getCloudConfig();
+        const uid = auth?.user?.uid || '';
+        const projectId = config.firebaseProjectId || 'fenixjpcatch';
+        const hasRealFirebaseAuth = uid !== '' && typeof auth?.refreshToken === 'string' && auth.refreshToken !== '';
+
+        if (hasRealFirebaseAuth && config.functionsBaseUrl === '') {
+            return await listSavedWordsFromFirestore(projectId, uid, token);
+        }
+        try {
+            return await this._cloudApi.listSavedWords(params, token);
+        } catch (e) {
+            if (uid !== '') {
+                return await listSavedWordsFromFirestore(projectId, uid, token);
+            }
+            throw e;
+        }
+    }
+
+    /**
+     * Soft-deletes a saved word online via Cloud Functions or directly via Cloud Firestore REST API.
+     * @param {string} wordId
+     * @param {string} expression
+     * @param {string} reading
+     * @param {string} token
+     * @returns {Promise<{success: boolean, wordId: string, deleted: boolean}>}
+     */
+    async _deleteSavedWordOnline(wordId, expression, reading, token) {
+        const resolvedWordId = wordId !== '' && !wordId.startsWith('opt_') ?
+            wordId :
+            await computeWordId(expression, reading);
+        const auth = await this.getAuthState();
+        const config = await this.getCloudConfig();
+        const uid = auth?.user?.uid || '';
+        const projectId = config.firebaseProjectId || 'fenixjpcatch';
+        const hasRealFirebaseAuth = uid !== '' && typeof auth?.refreshToken === 'string' && auth.refreshToken !== '';
+
+        if (hasRealFirebaseAuth && config.functionsBaseUrl === '') {
+            return await deleteSavedWordFromFirestore(resolvedWordId, projectId, uid, token);
+        }
+        try {
+            return await this._cloudApi.deleteSavedWord(resolvedWordId, token);
+        } catch (e) {
+            if (uid !== '') {
+                return await deleteSavedWordFromFirestore(resolvedWordId, projectId, uid, token);
+            }
+            throw e;
+        }
+    }
+
+    /**
      * Saves a word to the user notebook.
      * @param {{
      *   expression: string,
@@ -173,24 +360,30 @@ export class CloudController {
         // Optimistic local cache update
         const cache = await this.getSavedWordsCache();
         const nowIso = new Date().toISOString();
+        const optimisticWordId = cache[key]?.wordId || await computeWordId(expression, reading, params.jmdictSeq);
         cache[key] = {
-            wordId: cache[key]?.wordId || `opt_${Date.now()}`,
+            wordId: optimisticWordId,
             status: 'new',
             updatedAt: nowIso,
             expression,
             reading,
+            jmdictSeq: params.jmdictSeq ?? cache[key]?.jmdictSeq ?? null,
+            contextSentence: params.contextSentence ?? cache[key]?.contextSentence ?? null,
+            sourceUrl: params.sourceUrl ?? cache[key]?.sourceUrl ?? null,
+            sourceTitle: params.sourceTitle ?? cache[key]?.sourceTitle ?? null,
         };
         if (typeof chrome !== 'undefined' && chrome.storage?.local) {
             await chrome.storage.local.set({[CACHE_STORAGE_KEY]: cache});
         }
 
-        const auth = await this.getAuthState();
+        const token = await this.getValidAuthToken();
         const isOnline = typeof navigator === 'undefined' || navigator.onLine !== false;
 
-        if (isOnline && auth !== null && auth.token) {
+        if (isOnline && token !== null) {
             try {
-                const res = await this._cloudApi.saveWord(params, auth.token);
+                const res = await this._saveWordOnline(params, token);
                 cache[key] = {
+                    ...cache[key],
                     wordId: res.wordId,
                     status: res.status,
                     updatedAt: res.updatedAt,
@@ -236,12 +429,12 @@ export class CloudController {
      * @returns {Promise<{words: Array<Record<string, unknown>>, nextCursor: ?string}>}
      */
     async listSavedWords(params = {}) {
-        const auth = await this.getAuthState();
+        const token = await this.getValidAuthToken();
         const isOnline = typeof navigator === 'undefined' || navigator.onLine !== false;
 
-        if (isOnline && auth !== null && auth.token) {
+        if (isOnline && token !== null) {
             try {
-                const res = await this._cloudApi.listSavedWords(params, auth.token);
+                const res = await this._listSavedWordsOnline(params, token);
                 // Update local cache with returned words
                 if (Array.isArray(res.words)) {
                     const cache = await this.getSavedWordsCache();
@@ -250,12 +443,19 @@ export class CloudController {
                         const read = typeof item.reading === 'string' ? item.reading : '';
                         if (expr !== '' && read !== '') {
                             const key = this.getWordKey(expr, read);
+                            const contexts = Array.isArray(item.contexts) ?
+                                /** @type {Array<Record<string, unknown>>} */ (item.contexts) :
+                                [];
+                            const firstCtx = contexts[0];
                             cache[key] = {
                                 wordId: typeof item.id === 'string' ? item.id : '',
                                 status: typeof item.status === 'string' ? item.status : 'new',
                                 updatedAt: typeof item.updatedAt === 'string' ? item.updatedAt : new Date().toISOString(),
                                 expression: expr,
                                 reading: read,
+                                contextSentence: typeof firstCtx?.sentence === 'string' ? firstCtx.sentence : (cache[key]?.contextSentence ?? null),
+                                sourceUrl: typeof firstCtx?.sourceUrl === 'string' ? firstCtx.sourceUrl : (cache[key]?.sourceUrl ?? null),
+                                sourceTitle: typeof firstCtx?.sourceTitle === 'string' ? firstCtx.sourceTitle : (cache[key]?.sourceTitle ?? null),
                             };
                         }
                     }
@@ -277,7 +477,14 @@ export class CloudController {
             reading: item.reading,
             status: item.status,
             updatedAt: item.updatedAt,
-            contexts: [],
+            contexts: typeof item.contextSentence === 'string' && item.contextSentence !== '' ?
+                [{
+                    sentence: item.contextSentence,
+                    sourceUrl: item.sourceUrl || '',
+                    sourceTitle: item.sourceTitle || '',
+                    createdAt: item.updatedAt,
+                }] :
+                [],
         }));
         return {words, nextCursor: null};
     }
@@ -297,12 +504,12 @@ export class CloudController {
             await chrome.storage.local.set({[CACHE_STORAGE_KEY]: cache});
         }
 
-        const auth = await this.getAuthState();
+        const token = await this.getValidAuthToken();
         const isOnline = typeof navigator === 'undefined' || navigator.onLine !== false;
 
-        if (isOnline && auth !== null && auth.token) {
+        if (isOnline && token !== null) {
             try {
-                return await this._cloudApi.deleteSavedWord(wordId, auth.token);
+                return await this._deleteSavedWordOnline(wordId, expression, reading, token);
             } catch {
                 await this._offlineQueue.enqueue('deleteSavedWord', {wordId, expression, reading});
                 return {success: true, wordId, deleted: true};
@@ -326,8 +533,8 @@ export class CloudController {
         let failed = 0;
 
         try {
-            const auth = await this.getAuthState();
-            if (auth === null || !auth.token) {
+            const token = await this.getValidAuthToken();
+            if (token === null) {
                 return {processed: 0, failed: 0};
             }
 
@@ -335,12 +542,12 @@ export class CloudController {
             for (const item of items) {
                 try {
                     if (item.action === 'saveWord') {
-                        await this._cloudApi.saveWord(/** @type {any} */ (item.params), auth.token);
+                        await this._saveWordOnline(/** @type {any} */ (item.params), token);
                     } else if (item.action === 'deleteSavedWord') {
                         const wordId = typeof item.params.wordId === 'string' ? item.params.wordId : '';
-                        if (wordId !== '') {
-                            await this._cloudApi.deleteSavedWord(wordId, auth.token);
-                        }
+                        const expression = typeof item.params.expression === 'string' ? item.params.expression : '';
+                        const reading = typeof item.params.reading === 'string' ? item.params.reading : '';
+                        await this._deleteSavedWordOnline(wordId, expression, reading, token);
                     }
                     await this._offlineQueue.remove(item.id);
                     processed++;

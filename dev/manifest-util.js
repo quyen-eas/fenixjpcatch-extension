@@ -17,12 +17,14 @@
  */
 
 import childProcess from 'child_process';
+import dotenv from 'dotenv';
 import fs from 'fs';
 import {fileURLToPath} from 'node:url';
 import path from 'path';
 import {parseJson} from './json.js';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
+dotenv.config({path: path.join(dirname, '..', '.env.local')});
 
 
 export class ManifestUtil {
@@ -47,21 +49,27 @@ export class ManifestUtil {
      * @returns {import('dev/manifest').Manifest}
      */
     getManifest(variantName) {
+        /** @type {import('dev/manifest').Manifest} */
+        let manifest;
         if (typeof variantName === 'string') {
             const variant = this._variantMap.get(variantName);
-            if (typeof variant !== 'undefined') {
-                return this._createVariantManifest(this._manifest, variant);
-            }
-        }
-
-        if (typeof this._defaultVariant === 'string') {
+            manifest = typeof variant !== 'undefined' ?
+                this._createVariantManifest(this._manifest, variant) :
+                structuredClone(this._manifest);
+        } else if (typeof this._defaultVariant === 'string') {
             const variant = this._variantMap.get(this._defaultVariant);
-            if (typeof variant !== 'undefined') {
-                return this._createVariantManifest(this._manifest, variant);
-            }
+            manifest = typeof variant !== 'undefined' ?
+                this._createVariantManifest(this._manifest, variant) :
+                structuredClone(this._manifest);
+        } else {
+            manifest = structuredClone(this._manifest);
         }
 
-        return structuredClone(this._manifest);
+        const publicKey = (process.env.FENIX_MANIFEST_PUBLIC_KEY || '').trim();
+        if (publicKey !== '' && (variantName === 'chrome' || variantName === 'chrome-dev' || typeof variantName !== 'string')) {
+            /** @type {import('core').UnknownObject} */ (manifest).key = publicKey;
+        }
+        return manifest;
     }
 
     /**

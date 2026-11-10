@@ -18,6 +18,7 @@
 
 import Ajv from 'ajv';
 import standaloneCode from 'ajv/dist/standalone/index.js';
+import dotenv from 'dotenv';
 import esbuild from 'esbuild';
 import fs from 'fs';
 import {createRequire} from 'module';
@@ -93,6 +94,16 @@ export async function buildLibs() {
     const patchedModuleCode = "// @ts-nocheck\nimport {ucs2length} from './ucs2length.js';" + moduleCode.replaceAll('require("ajv/dist/runtime/ucs2length").default', 'ucs2length');
 
     fs.writeFileSync(path.join(extDir, 'lib/validate-schemas.js'), patchedModuleCode);
+
+    dotenv.config({path: path.join(dirname, '..', '.env.local')});
+    const cloudEnv = {
+        firebaseApiKey: (process.env.FENIX_FIREBASE_API_KEY || '').trim(),
+        firebaseProjectId: (process.env.FENIX_FIREBASE_PROJECT_ID || 'fenixjpcatch').trim(),
+        functionsRegion: (process.env.FENIX_FIREBASE_FUNCTIONS_REGION || 'asia-northeast1').trim(),
+        functionsBaseUrl: (process.env.FENIX_FIREBASE_FUNCTIONS_BASE_URL || '').trim(),
+        googleOAuthClientId: (process.env.FENIX_GOOGLE_OAUTH_CLIENT_ID || '').trim(),
+    };
+    fs.writeFileSync(path.join(extDir, 'lib/fenix-cloud-env.json'), JSON.stringify(cloudEnv, null, 4) + '\n');
 
     await copyWasm(path.join(extDir, 'lib'));
 }
