@@ -2914,6 +2914,14 @@ export class Backend {
                 }
             }
 
+            if (!missingFromDb && currentProfile.options.general.showGuide) {
+                currentProfile.options.general.showGuide = false;
+                optionsModified = true;
+                if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+                    chrome.storage.local.set({openedWelcomePage: true}).catch(() => {});
+                }
+            }
+
             if (optionsModified) {
                 await this._optionsUtil.save(this._options);
             }
@@ -2928,12 +2936,37 @@ export class Backend {
      * @returns {Promise<void>}
      */
     async _openWelcomeGuidePageOnce() {
+        try {
+            if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+                const localResult = await chrome.storage.local.get(['openedWelcomePage']);
+                if (localResult.openedWelcomePage) {
+                    return;
+                }
+            }
+        } catch {
+            // Ignore storage.local retrieval failure
+        }
+
         const result = await chrome.storage.session.get(['openedWelcomePage']);
         if (!result.openedWelcomePage) {
             await Promise.all([
                 this._openWelcomeGuidePage(),
                 chrome.storage.session.set({openedWelcomePage: true}),
             ]);
+            try {
+                if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+                    await chrome.storage.local.set({openedWelcomePage: true});
+                }
+                await this._modifySettings([{
+                    action: 'set',
+                    path: 'general.showGuide',
+                    value: false,
+                    scope: 'profile',
+                    optionsContext: {current: true},
+                }], 'backend');
+            } catch (e) {
+                log.warn(e);
+            }
         }
     }
 

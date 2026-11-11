@@ -35,9 +35,10 @@ export class WelcomeController {
      * @param {import('./onboarding-state.js').OnboardingStateStore} details.state
      * @param {import('../pages/settings/settings-controller.js').SettingsController} details.settingsController
      * @param {(targets: import('settings-modifications').Modification[]) => Promise<Error[]>} details.modifyGlobalSettings Resolves with the errors of failed modifications.
+     * @param {(targets: import('settings-modifications').Modification[]) => Promise<Error[]>} [details.modifyProfileSettings]
      * @param {() => Promise<import('./onboarding-settings.js').SpeechVoiceInfo[]>} details.getVoices
      */
-    constructor({installer, state, settingsController, modifyGlobalSettings, getVoices}) {
+    constructor({installer, state, settingsController, modifyGlobalSettings, modifyProfileSettings, getVoices}) {
         /** @type {import('./dictionary-installer.js').FenixDictionaryInstaller} */
         this._installer = installer;
         /** @type {import('./onboarding-state.js').OnboardingStateStore} */
@@ -46,6 +47,8 @@ export class WelcomeController {
         this._settingsController = settingsController;
         /** @type {(targets: import('settings-modifications').Modification[]) => Promise<Error[]>} */
         this._modifyGlobalSettings = modifyGlobalSettings;
+        /** @type {(targets: import('settings-modifications').Modification[]) => Promise<Error[]>} */
+        this._modifyProfileSettings = modifyProfileSettings || modifyGlobalSettings;
         /** @type {() => Promise<import('./onboarding-settings.js').SpeechVoiceInfo[]>} */
         this._getVoices = getVoices;
         /** @type {HTMLElement} */
@@ -276,7 +279,10 @@ export class WelcomeController {
      */
     async _disableShowGuide() {
         try {
-            await this._modifyGlobalSettings([{action: 'set', path: 'general.showGuide', value: false}]);
+            if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+                await chrome.storage.local.set({openedWelcomePage: true});
+            }
+            await this._modifyProfileSettings([{action: 'set', path: 'general.showGuide', value: false}]);
         } catch (e) {
             // Disabling showGuide is a convenience; don't break the page if settings write fails.
             log.warn(e);

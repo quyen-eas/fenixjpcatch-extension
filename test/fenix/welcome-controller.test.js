@@ -40,7 +40,39 @@ describe('WelcomeController showGuide handling', () => {
         }
     });
 
-    test('_disableShowGuide sets general.showGuide to false', async () => {
+    test('_disableShowGuide sets general.showGuide to false using modifyProfileSettings', async () => {
+        /** @type {unknown[]} */
+        const recorded = [];
+        /**
+         * @param {unknown} targets
+         * @returns {Promise<Error[]>}
+         */
+        const modifyProfileSettings = vi.fn(async (targets) => {
+            if (Array.isArray(targets)) {
+                for (const target of targets) {
+                    recorded.push(target);
+                }
+            }
+            return [];
+        });
+
+        const controller = /** @type {any} */ (new WelcomeController({
+            installer: /** @type {any} */ ({}),
+            state: /** @type {any} */ ({}),
+            settingsController: /** @type {any} */ ({}),
+            modifyGlobalSettings: vi.fn(),
+            modifyProfileSettings,
+            getVoices: async () => [],
+        }));
+
+        // eslint-disable-next-line no-underscore-dangle
+        await controller._disableShowGuide();
+
+        expect(modifyProfileSettings).toHaveBeenCalledTimes(1);
+        expect(recorded).toEqual([{action: 'set', path: 'general.showGuide', value: false}]);
+    });
+
+    test('_disableShowGuide falls back to modifyGlobalSettings when modifyProfileSettings is not provided', async () => {
         /** @type {unknown[]} */
         const recorded = [];
         /**
@@ -75,7 +107,7 @@ describe('WelcomeController showGuide handling', () => {
         /**
          * @returns {Promise<Error[]>}
          */
-        const modifyGlobalSettings = vi.fn(async () => {
+        const modifyProfileSettings = vi.fn(async () => {
             throw new Error('Storage write failed');
         });
 
@@ -83,7 +115,8 @@ describe('WelcomeController showGuide handling', () => {
             installer: /** @type {any} */ ({}),
             state: /** @type {any} */ ({}),
             settingsController: /** @type {any} */ ({}),
-            modifyGlobalSettings,
+            modifyGlobalSettings: vi.fn(),
+            modifyProfileSettings,
             getVoices: async () => [],
         }));
 

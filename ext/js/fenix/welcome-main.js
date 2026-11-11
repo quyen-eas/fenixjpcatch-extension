@@ -120,6 +120,23 @@ await Application.main(true, async (application) => {
         return results.flatMap(({error}) => (typeof error === 'undefined' ? [] : [ExtensionError.deserialize(error)]));
     };
 
+    /**
+     * @param {import('settings-modifications').Modification[]} targets
+     * @returns {Promise<Error[]>} The errors of the modifications that failed.
+     */
+    const modifyProfileSettings = async (targets) => {
+        const results = await settingsController.modifyProfileSettings(targets);
+        return results.flatMap(({error}) => (typeof error === 'undefined' ? [] : [ExtensionError.deserialize(error)]));
+    };
+
+    window.addEventListener('fenix:disable-show-guide', () => {
+        void settingsController.modifyProfileSettings([{
+            action: 'set',
+            path: 'general.showGuide',
+            value: false,
+        }]);
+    });
+
     const state = new OnboardingStateStore();
     const installer = new FenixDictionaryInstaller({
         download: async (url, onProgress) => {
@@ -156,7 +173,14 @@ await Application.main(true, async (application) => {
         createDictionarySettings: (name, enabled, styles) => DictionaryController.createDefaultDictionarySettings(name, enabled, styles ?? ''),
     });
 
-    const welcomeController = new WelcomeController({installer, state, settingsController, modifyGlobalSettings, getVoices: getSpeechVoices});
+    const welcomeController = new WelcomeController({
+        installer,
+        state,
+        settingsController,
+        modifyGlobalSettings,
+        modifyProfileSettings,
+        getVoices: getSpeechVoices,
+    });
     welcomeController.prepare();
 
     document.body.hidden = false;

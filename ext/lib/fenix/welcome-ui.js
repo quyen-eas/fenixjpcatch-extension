@@ -236,6 +236,11 @@ async function handlePermissionToggle(e) {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+    // Record that the welcome page has been opened to prevent reopening on browser restarts
+    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+        chrome.storage.local.set({openedWelcomePage: true}).catch(() => {});
+    }
+
     // Initial popup render
     renderPopup('mankai');
 
@@ -352,6 +357,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (checkedRadio instanceof HTMLInputElement) {
                 window.dispatchEvent(new CustomEvent('fenix:trigger-mode-change', {detail: {mode: checkedRadio.value}}));
             }
+            if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+                chrome.storage.local.set({openedWelcomePage: true}).catch(() => {});
+            }
+            window.dispatchEvent(new CustomEvent('fenix:disable-show-guide'));
             startBtn.innerHTML = `
                 <span class="material-symbols-outlined animate-spin text-[20px]">sync</span>
                 <span>Đã lưu cấu hình! Đang mở Bảng điều khiển...</span>
