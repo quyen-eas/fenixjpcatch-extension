@@ -342,7 +342,7 @@ export class Backend {
 
             const options = this._getProfileOptions({current: true}, false);
             if (options.general.showGuide || needsFenixWelcome) {
-                void this._openWelcomeGuidePageOnce();
+                void this._openWelcomeGuidePageOnce(needsFenixWelcome);
             }
 
             this._clipboardMonitor.on('change', this._onClipboardTextChange.bind(this));
@@ -2933,18 +2933,21 @@ export class Backend {
     }
 
     /**
+     * @param {boolean} [forceIfMissing]
      * @returns {Promise<void>}
      */
-    async _openWelcomeGuidePageOnce() {
-        try {
-            if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
-                const localResult = await chrome.storage.local.get(['openedWelcomePage']);
-                if (localResult.openedWelcomePage) {
-                    return;
+    async _openWelcomeGuidePageOnce(forceIfMissing = false) {
+        if (!forceIfMissing) {
+            try {
+                if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+                    const localResult = await chrome.storage.local.get(['openedWelcomePage']);
+                    if (localResult.openedWelcomePage) {
+                        return;
+                    }
                 }
+            } catch {
+                // Ignore storage.local retrieval failure
             }
-        } catch {
-            // Ignore storage.local retrieval failure
         }
 
         const result = await chrome.storage.session.get(['openedWelcomePage']);
@@ -2953,19 +2956,21 @@ export class Backend {
                 this._openWelcomeGuidePage(),
                 chrome.storage.session.set({openedWelcomePage: true}),
             ]);
-            try {
-                if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
-                    await chrome.storage.local.set({openedWelcomePage: true});
+            if (!forceIfMissing) {
+                try {
+                    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+                        await chrome.storage.local.set({openedWelcomePage: true});
+                    }
+                    await this._modifySettings([{
+                        action: 'set',
+                        path: 'general.showGuide',
+                        value: false,
+                        scope: 'profile',
+                        optionsContext: {current: true},
+                    }], 'backend');
+                } catch (e) {
+                    log.warn(e);
                 }
-                await this._modifySettings([{
-                    action: 'set',
-                    path: 'general.showGuide',
-                    value: false,
-                    scope: 'profile',
-                    optionsContext: {current: true},
-                }], 'backend');
-            } catch (e) {
-                log.warn(e);
             }
         }
     }

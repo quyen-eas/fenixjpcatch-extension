@@ -140,14 +140,14 @@ Copy từng dòng dưới đây dán vào ô giải trình của quyền tương
 
 Khi có code mới hoặc sửa lỗi, quy trình build và cập nhật như sau:
 
-1. Chạy lệnh build:
+1. Chạy lệnh build (bắt buộc truyền `--version` lớn hơn bản đã xuất bản trên Store, ví dụ `0.2.7`, để không bị gán mặc định `0.0.0.0`):
    ```powershell
    $env:Path = "$env:LOCALAPPDATA\node-v22\node-v22.14.0-win-x64;" + $env:Path
    Set-Location D:\Projects\Fenix\FenixCatch\fenixjpcatch-extension
-   node.exe dev/bin/build.js --target chrome
+   node.exe dev/bin/build.js --target chrome --version 0.2.7
    ```
 2. Đóng gói bản Store (tự động loại bỏ `key`):
    ```powershell
-   & "C:\Users\NTQJ-\AppData\Roaming\uv\python\cpython-3.12-windows-x86_64-none\python.exe" -c "import zipfile, shutil, json, os; dist='builds'; src=os.path.join(dist,'yomitan-chrome.zip'); tgt_dir=os.path.join(dist,'fenixjpcatch-chrome-v0.2.6'); store_zip=os.path.join(dist,'fenixjpcatch-chrome-v0.2.6-store.zip'); shutil.rmtree(tgt_dir,ignore_errors=True); zipfile.ZipFile(src,'r').extractall(tgt_dir); m_path=os.path.join(tgt_dir,'manifest.json'); m=json.load(open(m_path,'r',encoding='utf-8')); m.pop('key',None); json.dump(m,open(m_path,'w',encoding='utf-8'),indent=4,ensure_ascii=False); z=zipfile.ZipFile(store_zip,'w',zipfile.ZIP_DEFLATED); [z.write(os.path.join(r,f),os.path.relpath(os.path.join(r,f),tgt_dir)) for r,_,files in os.walk(tgt_dir) for f in files]; z.close(); print('UPDATE_PACKAGE_READY')"
+   & "C:\Users\NTQJ-\AppData\Roaming\uv\python\cpython-3.12-windows-x86_64-none\python.exe" -c "import zipfile, shutil, json, os; dist='builds'; src=os.path.join(dist,'yomitan-chrome.zip'); tgt_dir=os.path.join(dist,'fenixjpcatch-chrome-v0.2.7'); store_zip=os.path.join(dist,'fenixjpcatch-chrome-v0.2.7-store.zip'); shutil.rmtree(tgt_dir,ignore_errors=True); zipfile.ZipFile(src,'r').extractall(tgt_dir); m_path=os.path.join(tgt_dir,'manifest.json'); m=json.load(open(m_path,'r',encoding='utf-8')); m.pop('key',None); json.dump(m,open(m_path,'w',encoding='utf-8'),indent=4,ensure_ascii=False); z=zipfile.ZipFile(store_zip,'w',zipfile.ZIP_DEFLATED); [z.write(os.path.join(r,f),os.path.relpath(os.path.join(r,f),tgt_dir)) for r,_,files in os.walk(tgt_dir) for f in files]; z.close(); print('UPDATE_PACKAGE_READY')"
    ```
 3. Vào trang Developer Dashboard > Bấm vào FenixJpCatch > Tab **Package** > Bấm **Upload new package** và chọn file `-store.zip` mới > Bấm **Submit for review**.

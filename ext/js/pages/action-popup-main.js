@@ -26,10 +26,13 @@ import {HotkeyUtil} from '../input/hotkey-util.js';
 class DisplayController {
     /**
      * @param {import('../comm/api.js').API} api
+     * @param {Application} application
      */
-    constructor(api) {
+    constructor(api, application) {
         /** @type {import('../comm/api.js').API} */
         this._api = api;
+        /** @type {Application} */
+        this._application = application;
         /** @type {?import('settings').Options} */
         this._optionsFull = null;
         /** @type {ThemeController} */
@@ -81,6 +84,16 @@ class DisplayController {
         }
 
         this._updateProfileSelect(profiles, profileCurrent);
+
+        this._application.on('databaseUpdated', () => { void this._refreshDictionaryStatus(); });
+        this._application.on('optionsUpdated', () => { void this._refreshDictionaryStatus(); });
+        if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.onChanged) {
+            chrome.storage.onChanged.addListener((changes, areaName) => {
+                if (areaName === 'local' && Object.prototype.hasOwnProperty.call(changes, 'fenixOnboarding')) {
+                    void this._refreshDictionaryStatus();
+                }
+            });
+        }
 
         setTimeout(() => {
             document.body.dataset.loaded = 'true';
@@ -192,7 +205,7 @@ class DisplayController {
         if (welcome !== null) {
             welcome.addEventListener('click', (e) => {
                 e.preventDefault();
-                void chrome.tabs.create({url: chrome.runtime.getURL('/fenix-welcome.html')});
+                void this._openOrFocusWelcomeTab();
             });
         }
         const about = document.querySelector('.action-open-fenix-about');
@@ -201,6 +214,43 @@ class DisplayController {
                 e.preventDefault();
                 void chrome.tabs.create({url: chrome.runtime.getURL('/fenix-about.html')});
             });
+        }
+    }
+
+    /**
+     * Focuses an already-open Fenix welcome tab if present, or opens a new one.
+     * @returns {Promise<void>}
+     */
+    async _openOrFocusWelcomeTab() {
+        const welcomeUrl = chrome.runtime.getURL('/fenix-welcome.html');
+        try {
+            const tabs = await chrome.tabs.query({});
+            const existing = tabs.find((tab) => typeof tab.url === 'string' && tab.url.startsWith(welcomeUrl));
+            if (existing && typeof existing.id === 'number') {
+                await chrome.tabs.update(existing.id, {active: true});
+                if (typeof existing.windowId === 'number' && typeof chrome.windows === 'object' && chrome.windows !== null) {
+                    await chrome.windows.update(existing.windowId, {focused: true});
+                }
+                return;
+            }
+        } catch {
+            // Fall back to opening a new tab
+        }
+        await chrome.tabs.create({url: welcomeUrl});
+    }
+
+    /** @returns {Promise<void>} */
+    async _refreshDictionaryStatus() {
+        try {
+            const optionsFull = await this._api.optionsGetFull();
+            this._optionsFull = optionsFull;
+            const {profiles, profileCurrent} = optionsFull;
+            const defaultProfile = (profileCurrent >= 0 && profileCurrent < profiles.length) ? profiles[profileCurrent] : null;
+            if (defaultProfile !== null) {
+                await this._updateDictionariesEnabledWarnings(defaultProfile.options);
+            }
+        } catch {
+            // Ignore transient refresh errors
         }
     }
 
@@ -347,6 +397,11 @@ class DisplayController {
      */
     async _updateDictionariesEnabledWarnings(options) {
         const tooltip = document.querySelectorAll('.tooltip');
+        const hintCard = document.getElementById('fenix-popup-hint-card');
+        const offlineStatusCard = document.getElementById('fenix-popup-offline-status');
+        const statusDot = document.getElementById('fenix-popup-status-dot');
+        const statusLabel = document.getElementById('fenix-popup-status-label');
+        const statusCount = document.getElementById('fenix-popup-status-count');
         const dictionaries = await this._api.getDictionaryInfo();
 
         const enabledDictionaries = new Set();
@@ -357,17 +412,87 @@ class DisplayController {
         }
 
         let enabledCount = 0;
-        for (const {title} of dictionaries) {
-            if (enabledDictionaries.has(title)) {
+        for (const {title, importSuccess} of dictionaries) {
+            if (importSuccess !== false && enabledDictionaries.has(title)) {
                 ++enabledCount;
             }
         }
 
         if (enabledCount === 0) {
+            let isImporting = dictionaries.some((d) => d.importSuccess === false);
+            try {
+                if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+                    const stored = await chrome.storage.local.get(['fenixOnboarding']);
+                    const onboarding = /** @type {{importing?: Record<string, boolean>}|undefined} */ (stored.fenixOnboarding);
+                    if (onboarding && onboarding.importing && Object.values(onboarding.importing).some(Boolean)) {
+                        isImporting = true;
+                    }
+                }
+            } catch {
+                // Ignore storage read failure
+            }
+
+            if (hintCard !== null) {
+                hintCard.classList.add('fenix-hint-warning');
+                hintCard.onclick = (e) => {
+                    e.preventDefault();
+                    void this._openOrFocusWelcomeTab();
+                };
+            }
+            if (offlineStatusCard !== null) {
+                offlineStatusCard.classList.add('fenix-offline-status-warning');
+                offlineStatusCard.onclick = (e) => {
+                    e.preventDefault();
+                    void this._openOrFocusWelcomeTab();
+                };
+            }
+            if (statusDot !== null) {
+                statusDot.classList.remove('fenix-status-dot-ready');
+                statusDot.classList.add('fenix-status-dot-warning');
+            }
+            if (statusLabel !== null) {
+                statusLabel.textContent = isImporting ? 'Đang nạp từ điển...' : 'Chưa có dữ liệu từ điển';
+            }
+            if (statusCount !== null) {
+                statusCount.textContent = isImporting ? 'Giữ tab Hướng dẫn mở đến 100%' : 'Nhấn phía trên để nạp ngay';
+            }
+
             for (let i = 0; i < tooltip.length; i++) {
-                tooltip[i].innerHTML = '<a href="/fenix-welcome.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">Chưa cài bộ từ điển — Nhấn để nạp tự động</a>';
+                const link = document.createElement('a');
+                link.href = '/fenix-welcome.html';
+                link.className = 'action-open-fenix-welcome-progress';
+                link.style.color = 'inherit';
+                link.style.fontWeight = 'bold';
+                link.style.textDecoration = isImporting ? 'none' : 'underline';
+                link.textContent = isImporting ?
+                    '⏳ Đang tự động nạp bộ từ điển... Nhấn để xem tiến trình' :
+                    '⚠️ Chưa nạp xong từ điển — Nhấn để mở trang nạp tự động';
+                tooltip[i].replaceChildren(link);
                 tooltip[i].classList.add('enable-dictionary-tooltip');
             }
+        } else {
+            if (hintCard !== null) {
+                hintCard.classList.remove('fenix-hint-warning');
+                hintCard.onclick = null;
+            }
+            if (offlineStatusCard !== null) {
+                offlineStatusCard.classList.remove('fenix-offline-status-warning');
+                offlineStatusCard.onclick = null;
+            }
+            if (statusDot !== null) {
+                statusDot.classList.remove('fenix-status-dot-warning');
+                statusDot.classList.add('fenix-status-dot-ready');
+            }
+            if (statusLabel !== null) {
+                statusLabel.textContent = 'Từ điển ngoại tuyến (Sẵn sàng)';
+            }
+            if (statusCount !== null) {
+                statusCount.textContent = '180,000+ từ & ví dụ đối soát';
+            }
+            for (let i = 0; i < tooltip.length; i++) {
+                tooltip[i].classList.remove('enable-dictionary-tooltip');
+            }
+            this._updateDisplayModifierKey();
         }
     }
 
@@ -395,6 +520,6 @@ class DisplayController {
 await Application.main(true, async (application) => {
     void application.api.logIndicatorClear();
 
-    const displayController = new DisplayController(application.api);
+    const displayController = new DisplayController(application.api, application);
     await displayController.prepare();
 });

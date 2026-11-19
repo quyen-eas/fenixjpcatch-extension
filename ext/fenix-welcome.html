@@ -10,6 +10,7 @@
     <link rel="icon" type="image/png" href="/images/icon48.png" sizes="48x48">
     <link rel="icon" type="image/png" href="/images/icon128.png" sizes="128x128">
     <link rel="stylesheet" type="text/css" href="/css/fenix-stitch.css">
+    <link rel="stylesheet" type="text/css" href="/css/fenix.css">
     <script src="/lib/fenix/welcome-ui.js" type="module"></script>
     <script src="/js/fenix/welcome-main.js" type="module"></script>
 </head>
@@ -82,12 +83,12 @@
 
                     <!-- Offline Status Pill -->
                     <div class="inline-flex items-center gap-space-xs px-3.5 py-1 rounded-full bg-surface-container-high/90 backdrop-blur-md shadow-inner text-tertiary-fixed font-label-md text-label-md mb-space-md">
-                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                        <span>Phiên bản v0.2.6</span>
+                        <span id="welcome-offline-dot" class="w-2 h-2 rounded-full fenix-dot-amber animate-pulse"></span>
+                        <span>Phiên bản v0.2.7</span>
                         <span class="opacity-40">•</span>
                         <span class="text-on-surface-variant flex items-center gap-1 font-label-sm text-label-sm">
-                            <span class="material-symbols-outlined text-[14px] text-tertiary">offline_pin</span>
-                            Sẵn sàng ngoại tuyến
+                            <span id="welcome-offline-pill-icon" class="material-symbols-outlined text-[14px] fenix-tone-amber fenix-spin">sync</span>
+                            <span id="welcome-offline-pill-text">Đang chuẩn bị dữ liệu ngoại tuyến...</span>
                         </span>
                     </div>
 
@@ -142,36 +143,48 @@
                     </div>
 
                     <!-- Bước 2: Dữ liệu Offline Sẵn Sàng -->
-                    <div class="relative group bg-surface-container-low/90 backdrop-blur-xl p-space-lg rounded-xl shadow-lg flex flex-col justify-between transition-all duration-300 hover:bg-surface-container">
+                    <div id="welcome-step2-card" class="relative group bg-surface-container-low/90 backdrop-blur-xl p-space-lg rounded-xl shadow-lg flex flex-col justify-between transition-all duration-300 hover:bg-surface-container fenix-step2-active" aria-live="polite">
                         <div class="flex flex-col gap-space-sm">
-                            <div class="flex items-center justify-between">
-                                <span class="px-2.5 py-1 rounded-md bg-secondary-container/60 text-secondary font-label-sm text-label-sm tracking-wide uppercase font-semibold">
+                            <div class="flex items-center justify-between gap-2">
+                                <span id="welcome-step2-label" class="px-2.5 py-1 rounded-md bg-secondary-container/60 text-secondary font-label-sm text-label-sm tracking-wide uppercase font-semibold">
                                     Bước 02
                                 </span>
-                                <div class="flex items-center gap-1.5 text-tertiary-fixed font-label-sm text-label-sm bg-tertiary-container/60 px-2 py-0.5 rounded-full">
-                                    <span class="material-symbols-outlined text-[14px]">storage</span>
-                                    <span>IndexedDB Sẵn Sàng</span>
+                                <div id="welcome-step2-badge" class="flex items-center gap-1.5 font-label-sm text-label-sm font-semibold px-2.5 py-0.5 rounded-full fenix-bg-amber">
+                                    <span id="welcome-step2-badge-icon" class="material-symbols-outlined text-[14px] fenix-spin">sync</span>
+                                    <span id="welcome-step2-badge-text">Đang nạp 5%...</span>
                                 </div>
                             </div>
-                            <h2 class="font-headline-sm text-headline-sm text-on-surface font-semibold pt-1">
-                                Từ điển ngoại tuyến tích hợp
+                            <h2 id="welcome-step2-title" class="font-headline-sm text-headline-sm text-on-surface font-semibold pt-1">
+                                Đang nạp từ điển ngoại tuyến...
                             </h2>
-                            <p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
-                                Nạp sẵn kho dữ liệu Hán – Việt hoàn chỉnh. Tra cứu siêu tốc độ trễ &lt;10ms, không phụ thuộc kết nối mạng.
+                            <p id="welcome-step2-desc" class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
+                                Đang giải nén 180,000+ mục từ &amp; Hán tự vào trình duyệt (~30–60 giây lần đầu). Vui lòng giữ trang mở đến 100%!
                             </p>
                         </div>
 
                         <div class="mt-space-lg flex flex-col gap-space-xs">
-                            <div class="bg-surface-container-lowest/60 p-space-sm rounded-lg flex items-center justify-between">
-                                <div class="flex items-center gap-2">
-                                    <span class="material-symbols-outlined text-tertiary text-[18px]">database</span>
-                                    <span class="font-label-md text-label-md text-on-surface">180,000+ Mục từ &amp; Hán Tự</span>
+                            <div class="bg-surface-container-lowest/60 p-space-sm rounded-lg flex flex-col gap-2">
+                                <div class="flex items-center justify-between gap-2">
+                                    <div class="flex items-center gap-2">
+                                        <span class="material-symbols-outlined text-tertiary text-[18px]">database</span>
+                                        <span class="font-label-md text-label-md text-on-surface">180,000+ Mục từ &amp; Hán Tự</span>
+                                    </div>
+                                    <span class="font-label-md text-label-md font-bold fenix-tone-amber" id="welcome-dict-status">Đang nạp 5%...</span>
                                 </div>
-                                <span class="font-label-sm text-label-sm text-emerald-400 font-semibold" id="welcome-dict-status">100% Sẵn sàng</span>
+                                <div class="fenix-progress-track">
+                                    <div id="welcome-step2-progress-bar" class="fenix-progress-fill" style="width: 5%"></div>
+                                </div>
+                                <div id="welcome-step2-substatus" class="font-label-sm text-label-sm fenix-tone-amber">
+                                    Đang chuẩn bị giải nén dữ liệu từ điển...
+                                </div>
+                                <button id="welcome-step2-retry-btn" type="button" class="fenix-retry-btn mt-1" hidden>
+                                    <span class="material-symbols-outlined text-[16px]">refresh</span>
+                                    <span>Thử lại nạp từ điển</span>
+                                </button>
                             </div>
                             <div class="flex flex-wrap gap-1.5 pt-1">
-                                <span class="px-2 py-0.5 rounded bg-surface-container-high text-tertiary-fixed-dim font-label-sm text-label-sm">JA-VI Chuẩn</span>
-                                <span class="px-2 py-0.5 rounded bg-surface-container-high text-tertiary-fixed-dim font-label-sm text-label-sm">Âm Hán Việt</span>
+                                <span id="welcome-pill-javi" class="px-2 py-0.5 rounded font-label-sm text-label-sm fenix-bg-amber">JA-VI: Đang nạp...</span>
+                                <span id="welcome-pill-kanji" class="px-2 py-0.5 rounded bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm">Kanji-VI: Đang chờ...</span>
                                 <span class="px-2 py-0.5 rounded bg-surface-container-high text-tertiary-fixed-dim font-label-sm text-label-sm">Kèm nét viết</span>
                             </div>
                         </div>
@@ -288,11 +301,11 @@
                 <section class="flex flex-col sm:flex-row items-center justify-between gap-space-lg bg-surface-container-high/40 backdrop-blur-xl p-space-lg rounded-xl mb-space-xl">
                     <div class="flex items-center gap-space-md">
                         <div class="w-12 h-12 rounded-xl bg-primary-container text-tertiary-fixed flex items-center justify-center flex-shrink-0 shadow-inner">
-                            <span class="material-symbols-outlined text-[26px]">rocket_launch</span>
+                            <span id="welcome-bottom-icon" class="material-symbols-outlined text-[26px] fenix-spin">sync</span>
                         </div>
                         <div class="flex flex-col text-left">
-                            <span class="font-headline-sm text-headline-sm text-on-surface font-semibold">Tất cả cấu hình đã hoàn tất</span>
-                            <span class="font-body-sm text-body-sm text-on-surface-variant">Sẵn sàng mở rộng vốn từ tiếng Nhật và Hán tự mỗi ngày</span>
+                            <span id="welcome-bottom-title" class="font-headline-sm text-headline-sm text-on-surface font-semibold">Đang hoàn tất nạp từ điển ngoại tuyến...</span>
+                            <span id="welcome-bottom-subtitle" class="font-body-sm text-body-sm text-on-surface-variant">Vui lòng đợi thanh tiến trình đạt 100% để bắt đầu tra cứu</span>
                         </div>
                     </div>
                     <div class="flex items-center gap-space-md w-full sm:w-auto">
@@ -300,9 +313,9 @@
                             <span>Mở trang từ điển độc lập</span>
                             <span class="material-symbols-outlined text-[18px]">open_in_new</span>
                         </a>
-                        <button type="button" class="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-space-xl py-3 rounded-xl bg-gradient-to-r from-tertiary-fixed via-secondary to-primary-fixed text-on-tertiary-fixed font-label-lg text-label-lg font-bold shadow-[0_4px_25px_rgba(246,219,192,0.35)] hover:shadow-[0_4px_35px_rgba(246,219,192,0.55)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300" id="btnStartNow">
-                            <span>Bắt đầu sử dụng ngay</span>
-                            <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+                        <button type="button" class="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-space-xl py-3 rounded-xl bg-gradient-to-r from-tertiary-fixed via-secondary to-primary-fixed text-on-tertiary-fixed font-label-lg text-label-lg font-bold shadow-[0_4px_25px_rgba(246,219,192,0.35)] hover:shadow-[0_4px_35px_rgba(246,219,192,0.55)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 fenix-btn-busy" id="btnStartNow">
+                            <span class="material-symbols-outlined text-[20px] fenix-spin">sync</span>
+                            <span>Đang nạp từ điển (0%)...</span>
                         </button>
                     </div>
                 </section>
@@ -335,7 +348,7 @@
             </div>
         </div>
         <div class="flex items-center gap-space-lg text-on-surface-variant font-label-md text-label-md">
-            <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px] text-primary">verified</span> Phiên bản v0.2.6</span>
+            <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px] text-primary">verified</span> Phiên bản v0.2.7</span>
             <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px] text-tertiary">translate</span> 180,000+ từ vựng</span>
             <span class="text-on-surface-variant/60">© 2026 FenixJpCatch. Bản quyền kế thừa GPL-3.0.</span>
         </div>

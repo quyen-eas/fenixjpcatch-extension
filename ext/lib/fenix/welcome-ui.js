@@ -236,11 +236,6 @@ async function handlePermissionToggle(e) {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // Record that the welcome page has been opened to prevent reopening on browser restarts
-    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
-        chrome.storage.local.set({openedWelcomePage: true}).catch(() => {});
-    }
-
     // Initial popup render
     renderPopup('mankai');
 
@@ -321,38 +316,334 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // Observe hidden WelcomeController status to mirror live dictionary installation progress on Step 2 card
+    // Observe hidden WelcomeController status to mirror live dictionary installation progress inside Step 2 card
     const dictStatusBadge = document.getElementById('welcome-dict-status');
     const hiddenList = document.getElementById('fenix-dictionary-list');
+    const pillJaVi = document.getElementById('welcome-pill-javi');
+    const pillKanji = document.getElementById('welcome-pill-kanji');
+    const offlineDot = document.getElementById('welcome-offline-dot');
+    const offlinePillIcon = document.getElementById('welcome-offline-pill-icon');
+    const offlinePillText = document.getElementById('welcome-offline-pill-text');
+    const step2Card = document.getElementById('welcome-step2-card');
+    const step2Badge = document.getElementById('welcome-step2-badge');
+    const step2BadgeIcon = document.getElementById('welcome-step2-badge-icon');
+    const step2BadgeText = document.getElementById('welcome-step2-badge-text');
+    const step2Title = document.getElementById('welcome-step2-title');
+    const step2Desc = document.getElementById('welcome-step2-desc');
+    const step2Bar = document.getElementById('welcome-step2-progress-bar');
+    const step2Substatus = document.getElementById('welcome-step2-substatus');
+    const step2RetryBtn = document.getElementById('welcome-step2-retry-btn');
+    const bottomIcon = document.getElementById('welcome-bottom-icon');
+    const bottomTitle = document.getElementById('welcome-bottom-title');
+    const bottomSubtitle = document.getElementById('welcome-bottom-subtitle');
+    const startBtn = document.getElementById('btnStartNow');
+
+    let isNavigating = false;
+    let maxOverallPct = 5;
+
+    const estimateRowProgress = (row) => {
+        const phase = row.dataset.phase || 'checking';
+        if (phase === 'installed') { return 1; }
+        if (phase === 'downloading') {
+            const widthStr = row.querySelector('.fenix-dictionary-progress .progress-bar')?.style.width || '0%';
+            const pct = Math.max(0, Math.min(100, Number.parseFloat(widthStr) || 0));
+            return 0.02 + (pct / 100) * 0.04;
+        }
+        if (phase === 'importing') {
+            const statusText = row.querySelector('.fenix-dictionary-status')?.textContent || '';
+            const widthStr = row.querySelector('.fenix-dictionary-progress .progress-bar')?.style.width || '0%';
+            const barRatio = Math.max(0, Math.min(1, (Number.parseFloat(widthStr) || 0) / 100));
+            const stepMatch = /\bbước\s+(\d+)\s*\/\s*(\d+)/i.exec(statusText);
+            const step = stepMatch ? Number.parseInt(stepMatch[1], 10) : 1;
+            if (step <= 1) { return 0.05; }
+            if (step === 2) { return 0.06; }
+            if (step === 3) { return 0.06 + barRatio * 0.09; }
+            if (step === 4) { return 0.15 + barRatio * 0.25; }
+            if (step === 5) { return 0.40 + barRatio * 0.56; }
+            return 0.96 + barRatio * 0.03;
+        }
+        return 0;
+    };
+
+    const updateDictPill = (pillEl, label, row) => {
+        if (!pillEl || !row) { return; }
+        const phase = row.dataset.phase || 'checking';
+        if (phase === 'installed') {
+            pillEl.textContent = `✓ ${label} Chuẩn`;
+            pillEl.className = 'px-2 py-0.5 rounded font-label-sm text-label-sm fenix-bg-emerald';
+        } else if (phase === 'error' || phase === 'missing') {
+            pillEl.textContent = `${label}: Cần thử lại`;
+            pillEl.className = 'px-2 py-0.5 rounded font-label-sm text-label-sm fenix-bg-rose';
+        } else if (phase === 'downloading' || phase === 'importing') {
+            pillEl.textContent = `${label}: Đang nạp...`;
+            pillEl.className = 'px-2 py-0.5 rounded font-label-sm text-label-sm fenix-bg-amber';
+        } else {
+            pillEl.textContent = `${label}: Đang chờ...`;
+            pillEl.className = 'px-2 py-0.5 rounded bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm';
+        }
+    };
+
+    const triggerStep2Attention = () => {
+        if (!step2Card) { return; }
+        step2Card.scrollIntoView({behavior: 'smooth', block: 'center'});
+        step2Card.classList.remove('fenix-install-banner--attention');
+        void step2Card.offsetWidth;
+        step2Card.classList.add('fenix-install-banner--attention');
+        setTimeout(() => {
+            step2Card.classList.remove('fenix-install-banner--attention');
+        }, 1900);
+    };
+
+    if (step2RetryBtn && hiddenList) {
+        step2RetryBtn.addEventListener('click', () => {
+            maxOverallPct = 5;
+            const rows = [...hiddenList.querySelectorAll('.fenix-dictionary-row')];
+            for (const row of rows) {
+                if (row.dataset.phase === 'error' || row.dataset.phase === 'missing') {
+                    row.querySelector('.fenix-dictionary-action')?.click();
+                }
+            }
+        });
+    }
+
     const syncDictInstallProgress = () => {
-        if (!dictStatusBadge || !hiddenList) { return; }
+        if (!hiddenList) { return; }
         const rows = [...hiddenList.querySelectorAll('.fenix-dictionary-row')];
         if (rows.length === 0) { return; }
+
         const installedCount = rows.filter((r) => r.dataset.phase === 'installed').length;
         const activeRow = rows.find((r) => r.dataset.phase === 'downloading' || r.dataset.phase === 'importing');
         const errorRow = rows.find((r) => r.dataset.phase === 'error');
-        if (installedCount === rows.length) {
-            dictStatusBadge.textContent = '100% Sẵn sàng';
-            dictStatusBadge.className = 'font-label-sm text-label-sm text-emerald-400 font-semibold';
-        } else if (activeRow) {
-            const statusText = activeRow.querySelector('.fenix-dictionary-status')?.textContent || 'Đang cài đặt...';
-            dictStatusBadge.textContent = `${statusText} (${installedCount}/${rows.length})`;
-            dictStatusBadge.className = 'font-label-sm text-label-sm text-amber-300 font-semibold animate-pulse';
-        } else if (errorRow) {
-            dictStatusBadge.textContent = 'Lỗi cài đặt (nhấn Thử lại)';
-            dictStatusBadge.className = 'font-label-sm text-label-sm text-rose-400 font-semibold cursor-pointer underline';
-            dictStatusBadge.onclick = () => { errorRow.querySelector('.fenix-dictionary-action')?.click(); };
+        const missingRow = rows.find((r) => r.dataset.phase === 'missing');
+        const isAllInstalled = installedCount === rows.length;
+        const hasIssue = !isAllInstalled && !activeRow && (Boolean(errorRow) || Boolean(missingRow));
+
+        const weights = rows.length === 2 ? [0.85, 0.15] : rows.map(() => 1 / rows.length);
+        let weightedProgress = 0;
+        for (let i = 0; i < rows.length; ++i) {
+            weightedProgress += estimateRowProgress(rows[i]) * weights[i];
+        }
+        let overallPct = isAllInstalled ? 100 : Math.min(99, Math.max(5, Math.round(weightedProgress * 100)));
+        if (!isAllInstalled && !hasIssue) {
+            maxOverallPct = Math.max(maxOverallPct, overallPct);
+            overallPct = maxOverallPct;
+        }
+
+        updateDictPill(pillJaVi, 'JA-VI', rows[0]);
+        updateDictPill(pillKanji, 'Kanji-VI', rows[1]);
+
+        if (isAllInstalled) {
+            maxOverallPct = 100;
+            if (offlineDot) {
+                offlineDot.className = 'w-2 h-2 rounded-full fenix-dot-emerald animate-pulse';
+            }
+            if (offlinePillIcon) {
+                offlinePillIcon.textContent = 'offline_pin';
+                offlinePillIcon.className = 'material-symbols-outlined text-[14px] fenix-tone-emerald';
+            }
+            if (offlinePillText) {
+                offlinePillText.textContent = 'Sẵn sàng ngoại tuyến';
+            }
+            if (step2Card) {
+                step2Card.classList.remove('fenix-step2-active', 'fenix-step2-error');
+                step2Card.classList.add('fenix-step2-ready');
+            }
+            if (step2Badge) {
+                step2Badge.className = 'flex items-center gap-1.5 font-label-sm text-label-sm font-semibold px-2.5 py-0.5 rounded-full fenix-bg-emerald';
+            }
+            if (step2BadgeIcon) {
+                step2BadgeIcon.textContent = 'storage';
+                step2BadgeIcon.classList.remove('fenix-spin');
+            }
+            if (step2BadgeText) {
+                step2BadgeText.textContent = 'IndexedDB Sẵn Sàng';
+            }
+            if (step2Title) {
+                step2Title.textContent = 'Từ điển ngoại tuyến tích hợp';
+            }
+            if (step2Desc) {
+                step2Desc.textContent = 'Nạp sẵn kho dữ liệu Hán – Việt hoàn chỉnh. Tra cứu siêu tốc độ trễ <10ms, không phụ thuộc kết nối mạng.';
+            }
+            if (dictStatusBadge) {
+                dictStatusBadge.textContent = '100% Sẵn sàng';
+                dictStatusBadge.className = 'font-label-md text-label-md font-bold fenix-tone-emerald';
+                dictStatusBadge.onclick = null;
+            }
+            if (step2Bar) {
+                step2Bar.style.width = '100%';
+                step2Bar.className = 'fenix-progress-fill fenix-progress-fill--ready';
+            }
+            if (step2Substatus) {
+                step2Substatus.hidden = true;
+            }
+            if (step2RetryBtn) {
+                step2RetryBtn.hidden = true;
+            }
+            if (bottomIcon) {
+                bottomIcon.textContent = 'rocket_launch';
+                bottomIcon.classList.remove('fenix-spin');
+            }
+            if (bottomTitle) {
+                bottomTitle.textContent = 'Tất cả cấu hình đã hoàn tất';
+            }
+            if (bottomSubtitle) {
+                bottomSubtitle.textContent = 'Sẵn sàng mở rộng vốn từ tiếng Nhật và Hán tự mỗi ngày';
+            }
+            if (startBtn && !isNavigating) {
+                startBtn.classList.remove('fenix-btn-busy');
+                startBtn.innerHTML = '<span>Bắt đầu sử dụng ngay</span><span class="material-symbols-outlined text-[20px]">arrow_forward</span>';
+            }
+        } else if (hasIssue) {
+            const issueRow = errorRow || missingRow;
+            const errDetail = issueRow?.querySelector('.fenix-dictionary-error')?.textContent || '';
+            if (offlineDot) {
+                offlineDot.className = 'w-2 h-2 rounded-full fenix-dot-rose animate-pulse';
+            }
+            if (offlinePillIcon) {
+                offlinePillIcon.textContent = 'warning';
+                offlinePillIcon.className = 'material-symbols-outlined text-[14px] fenix-tone-rose';
+            }
+            if (offlinePillText) {
+                offlinePillText.textContent = 'Chưa nạp xong từ điển';
+            }
+            if (step2Card) {
+                step2Card.classList.remove('fenix-step2-active', 'fenix-step2-ready');
+                step2Card.classList.add('fenix-step2-error');
+            }
+            if (step2Badge) {
+                step2Badge.className = 'flex items-center gap-1.5 font-label-sm text-label-sm font-semibold px-2.5 py-0.5 rounded-full fenix-bg-rose';
+            }
+            if (step2BadgeIcon) {
+                step2BadgeIcon.textContent = 'warning';
+                step2BadgeIcon.classList.remove('fenix-spin');
+            }
+            if (step2BadgeText) {
+                step2BadgeText.textContent = 'Cần nạp lại';
+            }
+            if (step2Title) {
+                step2Title.textContent = errorRow ? 'Nạp từ điển gặp lỗi' : 'Chưa có đủ từ điển ngoại tuyến';
+            }
+            if (step2Desc) {
+                step2Desc.textContent = errDetail
+                    ? `Quá trình cài đặt bị gián đoạn (${errDetail}). Hãy bấm "Thử lại nạp từ điển" bên dưới.`
+                    : 'Hãy giữ tab này mở và bấm "Thử lại nạp từ điển" để hoàn tất trước khi tra từ.';
+            }
+            if (dictStatusBadge) {
+                dictStatusBadge.textContent = `${overallPct}% (Lỗi)`;
+                dictStatusBadge.className = 'font-label-md text-label-md font-bold cursor-pointer fenix-tone-rose';
+                dictStatusBadge.onclick = () => { step2RetryBtn?.click(); };
+            }
+            if (step2Bar) {
+                step2Bar.style.width = `${overallPct}%`;
+                step2Bar.className = 'fenix-progress-fill fenix-progress-fill--error';
+            }
+            if (step2Substatus) {
+                step2Substatus.hidden = false;
+                step2Substatus.className = 'font-label-sm text-label-sm fenix-tone-rose';
+                step2Substatus.textContent = 'Quá trình nạp chưa hoàn tất — Nhấn Thử lại bên dưới';
+            }
+            if (step2RetryBtn) {
+                step2RetryBtn.hidden = false;
+            }
+            if (bottomIcon) {
+                bottomIcon.textContent = 'warning';
+                bottomIcon.classList.remove('fenix-spin');
+            }
+            if (bottomTitle) {
+                bottomTitle.textContent = 'Chưa thể tra từ — Bộ từ điển chưa nạp xong';
+            }
+            if (bottomSubtitle) {
+                bottomSubtitle.textContent = 'Vui lòng bấm Thử lại ở Bước 02 để hoàn tất cài đặt';
+            }
+            if (startBtn && !isNavigating) {
+                startBtn.classList.remove('fenix-btn-busy');
+                startBtn.innerHTML = '<span class="material-symbols-outlined text-[20px]">refresh</span><span>Thử nạp lại từ điển</span>';
+            }
+        } else {
+            const statusText = activeRow?.querySelector('.fenix-dictionary-status')?.textContent || 'Đang chuẩn bị cài đặt...';
+            if (offlineDot) {
+                offlineDot.className = 'w-2 h-2 rounded-full fenix-dot-amber animate-pulse';
+            }
+            if (offlinePillIcon) {
+                offlinePillIcon.textContent = 'sync';
+                offlinePillIcon.className = 'material-symbols-outlined text-[14px] fenix-tone-amber fenix-spin';
+            }
+            if (offlinePillText) {
+                offlinePillText.textContent = `Đang nạp dữ liệu ngoại tuyến (${overallPct}%)...`;
+            }
+            if (step2Card) {
+                step2Card.classList.remove('fenix-step2-ready', 'fenix-step2-error');
+                step2Card.classList.add('fenix-step2-active');
+            }
+            if (step2Badge) {
+                step2Badge.className = 'flex items-center gap-1.5 font-label-sm text-label-sm font-semibold px-2.5 py-0.5 rounded-full fenix-bg-amber';
+            }
+            if (step2BadgeIcon) {
+                step2BadgeIcon.textContent = 'sync';
+                step2BadgeIcon.classList.add('fenix-spin');
+            }
+            if (step2BadgeText) {
+                step2BadgeText.textContent = `Đang nạp ${overallPct}%`;
+            }
+            if (step2Title) {
+                step2Title.textContent = 'Đang nạp từ điển ngoại tuyến...';
+            }
+            if (step2Desc) {
+                step2Desc.textContent = 'Đang giải nén 180,000+ mục từ & Hán tự vào trình duyệt (~30–60 giây lần đầu). Vui lòng giữ trang mở đến 100%!';
+            }
+            if (dictStatusBadge) {
+                dictStatusBadge.textContent = `${overallPct}% (${installedCount}/${rows.length})`;
+                dictStatusBadge.className = 'font-label-md text-label-md font-bold animate-pulse fenix-tone-amber';
+                dictStatusBadge.onclick = null;
+            }
+            if (step2Bar) {
+                step2Bar.style.width = `${overallPct}%`;
+                step2Bar.className = 'fenix-progress-fill';
+            }
+            if (step2Substatus) {
+                step2Substatus.hidden = false;
+                step2Substatus.className = 'font-label-sm text-label-sm fenix-tone-amber';
+                step2Substatus.textContent = statusText;
+            }
+            if (step2RetryBtn) {
+                step2RetryBtn.hidden = true;
+            }
+            if (bottomIcon) {
+                bottomIcon.textContent = 'sync';
+                bottomIcon.classList.add('fenix-spin');
+            }
+            if (bottomTitle) {
+                bottomTitle.textContent = `Đang nạp dữ liệu từ điển (${overallPct}%)...`;
+            }
+            if (bottomSubtitle) {
+                bottomSubtitle.textContent = 'Vui lòng đợi thanh tiến trình ở Bước 02 đạt 100% rồi bắt đầu tra cứu';
+            }
+            if (startBtn && !isNavigating) {
+                startBtn.classList.add('fenix-btn-busy');
+                startBtn.innerHTML = `<span class="material-symbols-outlined text-[20px] fenix-spin">sync</span><span>Đang nạp từ điển (${overallPct}%) — Vui lòng đợi...</span>`;
+            }
         }
     };
     if (hiddenList && typeof MutationObserver !== 'undefined') {
         const observer = new MutationObserver(syncDictInstallProgress);
         observer.observe(hiddenList, {childList: true, subtree: true, attributes: true, characterData: true});
+        syncDictInstallProgress();
     }
 
-    // Start Now Button -> applies settings and opens Sổ từ & Bảng điều khiển (/saved-words.html)
-    const startBtn = document.getElementById('btnStartNow');
+    // Start Now Button -> prevents leaving mid-install; opens Sổ từ & Bảng điều khiển once installed
     if (startBtn) {
         startBtn.addEventListener('click', () => {
+            const rows = hiddenList ? [...hiddenList.querySelectorAll('.fenix-dictionary-row')] : [];
+            const allInstalled = rows.length > 0 && rows.every((r) => r.dataset.phase === 'installed');
+            if (!allInstalled) {
+                triggerStep2Attention();
+                const hasRetryable = rows.some((r) => r.dataset.phase === 'error' || r.dataset.phase === 'missing');
+                if (hasRetryable) {
+                    step2RetryBtn?.click();
+                }
+                return;
+            }
+            isNavigating = true;
             const checkedRadio = document.querySelector('input[name="triggerMode"]:checked');
             if (checkedRadio instanceof HTMLInputElement) {
                 window.dispatchEvent(new CustomEvent('fenix:trigger-mode-change', {detail: {mode: checkedRadio.value}}));
@@ -362,7 +653,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             window.dispatchEvent(new CustomEvent('fenix:disable-show-guide'));
             startBtn.innerHTML = `
-                <span class="material-symbols-outlined animate-spin text-[20px]">sync</span>
+                <span class="material-symbols-outlined fenix-spin text-[20px]">sync</span>
                 <span>Đã lưu cấu hình! Đang mở Bảng điều khiển...</span>
             `;
             setTimeout(() => {
